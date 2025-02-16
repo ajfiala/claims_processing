@@ -1,0 +1,17 @@
+meta {
+  name: loss
+  type: http
+  seq: 2
+}
+
+post {
+  url: http://localhost:8080/claim
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "description": "I drove my rental car into a bridge! I injured my hand and the glass is destroyed."
+  }
+}
