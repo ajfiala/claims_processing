@@ -92,7 +92,6 @@ QUESTIONS = [
         type=ELEMENT.SELECT,
         label="Select Event",
         lovs=[
-            LOV(value="", label="Select Event", description="Default value when nothing is selected."),
             LOV(value=EventType.TOWING_ONLY.value, label="Towing Only", description="Vehicle requires towing without additional damage."),
             LOV(value=EventType.COLLISION.value, label="Collision", description="Involvement in a vehicular accident."),
             LOV(value=EventType.INJURED_AS_PEDESTRIAN.value, label="Injured as Pedestrian/Bicyclist", description="Policyholder was injured while on foot or cycling."),
