@@ -50,11 +50,11 @@ const Claim = () => {
                         <div className="w-full flex flex-col items-center ">
 
                             <h1 className="text-3xl text-center max-w-[400px] w-fit">
-                                We've filled out these answers for you as best as we can <br />
+                                We've filled out some answers as best as we can. <br />
 
                             </h1>
-                            <p className="text-center mt-4 text-muted-foreground ">
-                                Please double check the form and submit to commence claim processing
+                            <p className="text-center mt-8 text-muted-foreground ">
+                                Please double check the form to complete the claim process.
                             </p>
                             <p className="text-center mt-32 text-muted-foreground">
                                 {`[ Some form to be built ]`}
