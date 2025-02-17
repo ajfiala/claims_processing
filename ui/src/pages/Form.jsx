@@ -71,15 +71,19 @@ const Form = () => {
                     :
                     <motion.div key="not-thinking" className=" absolute w-full" {...animate}>
                         <div className="w-full flex flex-col items-center ">
+                            <div className="border-b pb-12">
 
-                            <h1 className="text-3xl text-center max-w-[500px] w-fit">
-                                We've filled out some answers as best as we can. <br />
 
-                            </h1>
-                            <p className="text-center mt-8 text-muted-foreground ">
-                                Please double check the form to complete the claim process.
-                            </p>
-                            <div className="flex flex-col gap-y-12 mt-12 pb-24">
+
+                                <h1 className="text-3xl text-center max-w-[500px] w-fit">
+                                    We've filled out some answers as best as we can. <br />
+
+                                </h1>
+                                <p className="text-center mt-8 text-muted-foreground ">
+                                    Please double check the form to complete the claim process.
+                                </p>
+                            </div>
+                            <div className="flex flex-col gap-y-12 mt-18 pb-24">
                                 <AnimatePresence mode="popLayout">
                                     {questions.map((props, idx) => {
                                         const { dependsOn, id, type, label, optional, validate, lovs } = props
