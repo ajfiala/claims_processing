@@ -1,5 +1,4 @@
 import { create } from 'zustand';
-import { immer } from 'zustand/middleware/immer';
 import { getForm } from './api';
 import { DUMMY_RES } from './constants';
 
@@ -61,7 +60,7 @@ const INIT = {
     isDone: false
 }
 
-const useStore = create(immer((set, get) => ({
+const useStore = create((set, get) => ({
     ...INIT,
 
     setDescription: (description) => set(state => ({ ...state, description })),
@@ -76,7 +75,7 @@ const useStore = create(immer((set, get) => ({
 
             // const res = await getForm(get().description)
 
-            console.log(res)
+            // console.log(res)
 
 
             set(state => ({ ...state, ...res, isDone: true }))
@@ -100,8 +99,17 @@ const useStore = create(immer((set, get) => ({
     },
 
     setAnswer: (key, answer) => {
-        set((state) => { state.answers[key] = answer }) // TODO: error handle
+        set((state) => 
+        ({ ...state,
+            answers: {
+                ...state.answers,
+                [key]: {
+                    ...state.answers[key],
+                    value: answer
+                }
+            }})
+        ) // TODO: error handle
     }
-})))
+}))
 
 export default useStore;

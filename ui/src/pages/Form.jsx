@@ -30,8 +30,6 @@ const animate = {
 const Form = () => {
 
     const [generateForm, questions, isThinking] = useStore(useShallow(state => [state.generateForm, state.questions, state.isThinking]));
-    const answers = useStore(state => state.answers)
-    const setAnswer = useStore(state => state.setAnswer)
     useEffect(() => {
         generateForm()
     }, []);
@@ -81,60 +79,14 @@ const Form = () => {
                                 Please double check the form to complete the claim process.
                             </p>
                             <div className="flex flex-col gap-y-12 mt-12">
-                                {questions.map(({ dependsOn, id, type, label, optional, validate, lovs }, idx) => {
-                                    // console.log(`${dependsOn}`)
-                                    // const fn = eval(`${dependsOn}`); 
-                                    // console.log(fn(answers))
-                                    console.log("VAL", answers[id].value)
-                                    return (
-                                        // dependsOn ? fn : 
-                                        true && <div key={idx} className="">
-                                            <p className="text-muted-foreground text-sm pb-4">
-                                                {label}
-                                            </p>
-                                            {type === "select" &&
-                                                <Select onValueChange={(value) => setAnswer(id, value)} value={answers[id].value}>
-                                                    <SelectTrigger className="w-[500px] h-[60px]">
-                                                        <SelectValue placeholder="Select" />
-                                                    </SelectTrigger>
-                                                    <SelectContent>
-                                                        {lovs.map(({ value, label }, jdx) => (
-                                                            <SelectItem key={jdx} value={value}>{label}</SelectItem>
-                                                        ))}
-                                                    </SelectContent>
-                                                </Select>
-                                            }
-
-                                            {(type === "radio" || type === "yes-or-no" || type === "yes-or-no-or-unknown") &&
-                                                <RadioGroup onValueChange={(value) => setAnswer(id, value)} value={answers[id].value}
-                                                    className="flex flex-col space-y-1">
-
-
-                                                    {
-                                                        (() => 
-                                                            type === "yes-or-no" ? 
-                                                                [{ value: true, label: "Yes" }, { value: false, label: "No" }] 
-                                                                : type === "yes-or-no-or-unknown" ?
-                                                                [{ value: true, label: "Yes" }, { value: false, label: "No" }, { value: "unknown", label: "Unknown" }] 
-                                                                :lovs
-                                                        )().map(({ value, label }, jdx) => (
-                                                            <div key={jdx} className="flex items-center space-x-2">
-                                                                <RadioGroupItem value={value} id={id + value} />
-                                                                <Label htmlFor={id + value}>{label}</Label>
-                                                            </div>
-                                                        ))}
-
-
-                                                </RadioGroup>
-                                            }
-
-
-                                            {(type === "input" || type === "input-phone" || type === "numeric") &&
-                                                <Input onChange={(value) => setAnswer(id, value)} value={answers[id].value === null ? "" :  answers[id].value} className="w-[500px] h-[60px]" {...(type === "numeric" && {type:"number"})} />
-
-                                            }
-                                        </div>
-                                    )
+                                {questions.map((props, idx) => {
+                                    const { dependsOn, id, type, label, optional, validate, lovs } = props
+                                    return (true && <div key={idx} className="">
+                                        <p className="text-muted-foreground text-sm pb-4">
+                                            {label}
+                                        </p>
+                                        <Component {...props} />
+                                    </div>)
 
                                 })}
                             </div>
@@ -158,6 +110,61 @@ const Form = () => {
         </Transition>
 
     )
+}
+
+const Component = ({ dependsOn, id, type, label, optional, validate, lovs, ...props }) => {
+    const answers = useStore(state => state.answers)
+    const setAnswer = useStore(state => state.setAnswer)
+
+    const answer = useMemo(() => answers[id].value, [answers] )
+
+    return (
+        // dependsOn ? fn : 
+        <>
+            {type === "select" &&
+                <Select onValueChange={(value) => setAnswer(id, value)} value={answer}>
+                    <SelectTrigger className="w-[500px] h-[60px]">
+                        <SelectValue placeholder="Select" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {lovs.map(({ value, label }, jdx) => (
+                            <SelectItem key={jdx} value={value}>{label}</SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+            }
+
+            {(type === "radio" || type === "yes-or-no" || type === "yes-or-no-or-unknown") &&
+                <RadioGroup onValueChange={(value) => setAnswer(id, value)} value={answer}
+                    className="flex flex-col space-y-1">
+
+
+                    {
+                        (() =>
+                            type === "yes-or-no" ?
+                                [{ value: true, label: "Yes" }, { value: false, label: "No" }]
+                                : type === "yes-or-no-or-unknown" ?
+                                    [{ value: true, label: "Yes" }, { value: false, label: "No" }, { value: "unknown", label: "Unknown" }]
+                                    : lovs
+                        )().map(({ value, label }, jdx) => (
+                            <div key={jdx} className="flex items-center space-x-2">
+                                <RadioGroupItem value={value} id={id + value} />
+                                <Label htmlFor={id + value}>{label}</Label>
+                            </div>
+                        ))}
+
+
+                </RadioGroup>
+            }
+
+
+            {(type === "input" || type === "input-phone" || type === "numeric") &&
+                <Input onChange={(e) => setAnswer(id, e.target.value)} value={answer === null ? "" : answer} className="w-[500px] h-[60px]" {...(type === "numeric" && { type: "number" })} />
+
+            }
+        </>
+    )
+
 }
 
 export default Form;
