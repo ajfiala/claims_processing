@@ -15,7 +15,7 @@ const Type = (props) => {
             <div className="flex justify-center ">
                 <div>
                     <h1 className="text-3xl text-center ">
-                        Hello, I'm Bpom!<br />
+                        Hello, Bpom!<br />
                         Please select your claim type.
                     </h1>
                 </div>
