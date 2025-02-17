@@ -71,11 +71,10 @@ const useStore = create((set, get) => ({
         try {
             set(state => ({ ...state, isThinking: true }))
 
-            const res = DUMMY_RES
+            // NOTE: Uncomment if API is offline
+            // const res = DUMMY_RES
 
-            // const res = await getForm(get().description)
-
-            // console.log(res)
+            const res = await getForm(get().description)
 
 
             set(state => ({ ...state, ...res, isDone: true }))
