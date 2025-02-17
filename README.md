@@ -10,3 +10,10 @@ loss description instead of answering many pre-defined questions on the UI.
 
 # Dependencies
 Ensure that you have astral's uv installed https://astral.sh/
+
+# UI
+`npm i`
+`npm run dev`
+
+## Add components
+`npx shadcn@canary add textarea`
