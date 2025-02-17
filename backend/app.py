@@ -61,3 +61,8 @@ async def system_prompt(ctx: RunContext[None]) -> str:
 async def create_claim(loss: LossDescription):
     result = await agent.run(loss.description)
     return result.data
+
+@app.get("/form")
+def form():
+    from models import QUESTIONS
+    return QUESTIONS
