@@ -2,9 +2,9 @@ import { motion } from "framer-motion"
 import { cn } from "../lib/utils"
 
 const animate = {
-    initial: { opacity: 0.01, x: 50 },
+    initial: { opacity: 0.01, x: 100 },
     animate: { opacity: 1, x: 0 },
-    exit: { opacity: 0, x: -50 },
+    exit: { opacity: 0, x: -100 },
     transition: { type: "spring", stiffness: 120, damping: 20 },
 }
 

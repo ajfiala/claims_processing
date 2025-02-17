@@ -2,8 +2,10 @@ import { createElement, cloneElement } from 'react';
 import { useLocation, useOutlet } from "react-router-dom";
 import { AnimatePresence } from "framer-motion";
 import Layout from './pages/Layout'
-import Home from './pages/Home'
-import Claim from './pages/Claim'
+
+import Type from './pages/Type'
+import Describe from './pages/Describe'
+import Form from './pages/Form'
 
 // TODO: Code split if app grows too big
 // const Home = lazy(() => import('./pages/Home'));
@@ -19,11 +21,15 @@ function App() {
 export const PATHS = [
     {
         path: "/",
-        element: createElement(Home)
+        element: createElement(Type)
     },
     {
-        path: "/claim", //TODO ?description="jdjdjndf"
-        element: createElement(Claim)
+        path: "/claim/describe",
+        element: createElement(Describe)
+    },
+    {
+        path: "/claim/form", //TODO ?description="jdjdjndf"
+        element: createElement(Form)
     }
 ]
 
