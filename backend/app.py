@@ -19,13 +19,26 @@ from dotenv import load_dotenv
 from fastapi import FastAPI, Body
 from models import * 
 from pydantic_ai import Agent, RunContext
+from starlette.middleware import Middleware
+from starlette.middleware.cors import CORSMiddleware
 
 load_dotenv()
+
+middleware = [
+    Middleware(
+        CORSMiddleware,
+        allow_origins=["http://localhost:5173"], 
+        allow_credentials=True,
+        allow_methods=['*'],
+        allow_headers=['*']
+    )
+]
 
 app = FastAPI(
     title="Coconut Insurance Bangkok",
     description="Minimal backend for an automated FNOL processing flow using pydantic-ai.",
     version="0.0.1",
+    middleware=middleware
 )
 
 #######################
@@ -57,7 +70,10 @@ async def system_prompt(ctx: RunContext[None]) -> str:
 # The Single Endpoint
 #############################
 
-@app.post("/claim")
-async def create_claim(loss: LossDescription):
+@app.post("/form")
+async def create_form(loss: LossDescription):
     result = await agent.run(loss.description)
-    return result.data
+    return {
+        'questions': QUESTIONS,
+        'answers': result.data,
+    }

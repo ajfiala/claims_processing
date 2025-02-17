@@ -10,3 +10,16 @@ loss description instead of answering many pre-defined questions on the UI.
 
 # Dependencies
 Ensure that you have astral's uv installed https://astral.sh/
+
+# Start the server 
+`cd backend`
+`uv run uvicorn app:app --reload --host 0.0.0.0 --port 8080` 
+
+# UI
+Ensure a backend is running. Then update .env with the `BACKEND_URL` then
+`cd frontend`
+`npm i`
+`npm run dev`
+
+## Add components
+`npx shadcn@canary add textarea`
