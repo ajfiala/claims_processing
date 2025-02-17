@@ -14,7 +14,7 @@ const Layout = ({ children, ...props }) => {
 
                  <img src="/avatar.png" alt="avatar" className="absolute right-[calc(50%-25px)] -bottom-[calc(25px)] rounded-full border w-[50px] h-[50px] pointer-events-none" />
    
-                <div className="ml-auto [&>*]:ml-6 text-background">
+                <div className="ml-auto [&>*]:ml-6 text-background dark:text-foreground">
                     <button className="cursor-pointer opacity-80 hover:opacity-100 transition-opacity">
                         <Restart className="h-[24px]"/>
                     </button>
