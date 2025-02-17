@@ -28,7 +28,7 @@ const animate = {
 
 
 const Form = () => {
-
+    const answers = useStore(state => state.answers)
     const [generateForm, questions, isThinking] = useStore(useShallow(state => [state.generateForm, state.questions, state.isThinking]));
     useEffect(() => {
         generateForm()
@@ -40,6 +40,7 @@ const Form = () => {
     // }, [_answers])
 
     // const answer = useMemo((id) => answers[id].value, [answers])
+
 
     return (
         <Transition>
@@ -79,16 +80,24 @@ const Form = () => {
                                 Please double check the form to complete the claim process.
                             </p>
                             <div className="flex flex-col gap-y-12 mt-12 pb-24">
-                                {questions.map((props, idx) => {
-                                    const { dependsOn, id, type, label, optional, validate, lovs } = props
-                                    return (true && <div key={idx} className="">
-                                        <p className="text-muted-foreground text-sm pb-4">
-                                            {label}
-                                        </p>
-                                        <Component {...props} />
-                                    </div>)
+                                <AnimatePresence mode="popLayout">
+                                    {questions.map((props, idx) => {
+                                        const { dependsOn, id, type, label, optional, validate, lovs } = props
 
-                                })}
+                                        const shouldRender = dependsOn ? eval(`${dependsOn}`)(answers) === true : true
+
+                                        return (
+                                            shouldRender &&
+                                            <motion.div layout="preserve-aspect" key={idx + id} {...animate}>
+                                                <p className="text-muted-foreground text-sm pb-4">
+                                                    {label}
+                                                </p>
+                                                <Component {...props} />
+                                            </motion.div>
+                                        )
+
+                                    })}
+                                </AnimatePresence>
                             </div>
 
                         </div>
@@ -169,12 +178,12 @@ const Component = ({ dependsOn, id, type, label, optional, validate, lovs, ...pr
                     {lovs.map((lov, jdx) => {
                         const { value, label } = lov
                         return (
-                            
+
                             <div key={jdx} className="flex items-center space-x-2">
 
                                 <Checkbox
                                     key={jdx}
-                                    checked={answers[id] instanceof Array && answers[id].some(x=> x.value == value)}
+                                    checked={answers[id] instanceof Array && answers[id].some(x => x.value == value)}
                                     onCheckedChange={() => {
 
                                         let checkedList = answers[id]
