@@ -9,7 +9,8 @@ const Layout = ({ children, ...props }) => {
     
     return (
         <div className="relative w-full h-screen grid grid-rows-[70px_1fr] overflow-x-hidden">
-            <nav className="relative w-full h-full border-b flex items-center px-8  bg-primary shadow-2xl dark:bg-background dark:shadow-none z-50">
+            <div/>
+            <nav className="fixed top-0 left-0 h-[70px] w-full border-b flex items-center px-8  bg-primary shadow-2xl dark:bg-background dark:shadow-none z-50">
                 <img src="/logo.png" alt="logo" className=" h-[35px] cursor-pointer" onClick={() => navigate("/")} />
 
                  <img src="/avatar.png" alt="avatar" className="absolute right-[calc(50%-25px)] -bottom-[calc(25px)] rounded-full border w-[50px] h-[50px] pointer-events-none" />
