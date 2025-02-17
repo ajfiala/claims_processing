@@ -17,7 +17,7 @@ import {
 import { Label } from "@/components/shadcn/label"
 import { RadioGroup, RadioGroupItem } from "@/components/shadcn/radio-group"
 import { Input } from "@/components/shadcn/input";
-import { useCallback } from "react";
+import { Checkbox } from "@/components/shadcn/checkbox";
 
 const animate = {
     initial: { opacity: 0.01 },
@@ -78,7 +78,7 @@ const Form = () => {
                             <p className="text-center mt-8 text-muted-foreground ">
                                 Please double check the form to complete the claim process.
                             </p>
-                            <div className="flex flex-col gap-y-12 mt-12">
+                            <div className="flex flex-col gap-y-12 mt-12 pb-24">
                                 {questions.map((props, idx) => {
                                     const { dependsOn, id, type, label, optional, validate, lovs } = props
                                     return (true && <div key={idx} className="">
@@ -115,8 +115,9 @@ const Form = () => {
 const Component = ({ dependsOn, id, type, label, optional, validate, lovs, ...props }) => {
     const answers = useStore(state => state.answers)
     const setAnswer = useStore(state => state.setAnswer)
+    const setAnswerRaw = useStore(state => state.setAnswerRaw)
 
-    const answer = useMemo(() => answers[id].value, [answers] )
+    const answer = useMemo(() => answers[id].value, [answers])
 
     return (
         // dependsOn ? fn : 
@@ -162,9 +163,55 @@ const Component = ({ dependsOn, id, type, label, optional, validate, lovs, ...pr
                 <Input onChange={(e) => setAnswer(id, e.target.value)} value={answer === null ? "" : answer} className="w-[500px] h-[60px]" {...(type === "numeric" && { type: "number" })} />
 
             }
+
+            {type === "checkbox" &&
+                <div className="flex flex-col space-y-4">
+                    {lovs.map((lov, jdx) => {
+                        const { value, label } = lov
+                        return (
+                            
+                            <div key={jdx} className="flex items-center space-x-2">
+
+                                <Checkbox
+                                    key={jdx}
+                                    checked={answers[id] instanceof Array && answers[id].some(x=> x.value == value)}
+                                    onCheckedChange={() => {
+
+                                        let checkedList = answers[id]
+                                        console.log("cehcedk List:", checkedList)
+
+                                        if (checkedList.findIndex(item => item.value === value) === -1) {
+                                            checkedList.push(lov)
+                                        }
+                                        else {
+                                            checkedList = checkedList.filter(item => item.value !== value);
+                                        }
+                                        console.log("after: ", checkedList)
+                                        setAnswerRaw(id, checkedList)
+                                    }}
+                                />
+                                <Label htmlFor={id + value}>{label}</Label>
+                            </div>)
+
+                    })}
+                </div>
+            }
         </>
     )
 
 }
+
+
+// function toggleObjectInArray(array, value) {
+//     const index = array.findIndex(item => item.value === value);
+//     if (index === -1) {
+//         // Add if doesn't exist
+//         return false;
+//     } else {
+//         // Remove if exists
+//         return array.filter(item => item.value !== value);
+//     }
+// }
+
 
 export default Form;

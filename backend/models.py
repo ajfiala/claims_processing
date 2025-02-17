@@ -69,7 +69,7 @@ class AutoAnswers(BaseModel):
     wereFatalities: BoolAnswer
     wereInjuries: BoolAnswer
     numOtherVehicles: StringAnswer
-    injuredParty: StringAnswer
+    injuredParty: List[StringAnswer]
     vehicleDriverFirstName: StringAnswer
     vehicleDriverLastName: StringAnswer
     vehicleDriverPhoneNumber: StringAnswer
@@ -198,7 +198,13 @@ QUESTIONS = [
         type=ELEMENT.CHECKBOX,
         label="Insured (Injured Party)",
         description="Select the injured party that is also insured on the policy.",
-        lovs=[LOV(value="other", label="Other")]
+        lovs=[
+            LOV(
+                value="driver-1",
+                label="Billy BadDriver",
+                description="Main driver on the account; select if the collision is described in first person."
+            ),
+            LOV(value="other", label="Other")]
     ),
     Question(
         dependsOn="ans => ans?.eventType?.value == 'injured-as-pedestrian'",

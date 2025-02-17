@@ -108,7 +108,17 @@ const useStore = create((set, get) => ({
                     value: answer
                 }
             }})
-        ) // TODO: error handle
+        ) 
+    },
+
+    setAnswerRaw: (key, answer) => {
+        set((state) => 
+        ({ ...state,
+            answers: {
+                ...state.answers,
+                [key]: answer
+            }})
+        ) 
     }
 }))
 
