@@ -40,8 +40,9 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(
 logger = logging.getLogger(__name__)
 
 openai_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-
 client = instructor.from_openai(openai_client)
+model = "gpt-4-turbo"
+
 
 # async semaphore for parallel requests
 QUESTION_SEMAPHORE = asyncio.Semaphore(30) 
@@ -75,7 +76,7 @@ async def fetch_answer_for_question(
     possible_values: list[str] | None
 ) -> str:
     """
-    We prompt GPT-4 with a minimal question about the user text.
+    We prompt the llm with a minimal question about the user text.
     We want a single string or 'null'.
     For yes/no, we want 'true'/'false' or 'null'.
     We'll ask the model to produce a JSON conforming to QuestionAnswer schema.
@@ -83,21 +84,43 @@ async def fetch_answer_for_question(
     prompt_text = f"""
 User text: {description}
 Event Type: {event_type.value}
+Policy holder: Billy Baddriver
+
+You are an assistant for a First Notice of Loss (FNOL) flow for an insurance firm.
 
 We have a question:
 ID: {question_id}, Label: {question_label}, Type: {question_type}
 Possible Values: {possible_values or []}
 Question Description: {question_description or ''}
 
-Answer that question with a single string or 'null'. 
+<example>
+User text: I was in a car accident and my car was towed.
+Policy holder: Billy Baddriver
+Event Type: collision
+Question: Injuries?, Answer: null                 
+
+User text: I was rear ended and I hurt my head
+Policy holder: Billy Baddriver
+Event Type: collision
+Question: Injuries?, Answer: true
+
+User text: I was driving and a raccoon ate the passenger seat belt
+Policy holder: Billy Baddriver
+Event Type: damage-caused-by-animals
+Question: Other Driver First Name, Answer: null
+</example>
+
+Answer that question accurately with a single string or 'null'. Base your answer on the policy holder's text and nothing else.
+If the answer to the question cannot be deduced from the user text, respond 'null'.
 If yes/no, respond 'true' or 'false' or 'null'.
 """
 
     # We'll do a minimal structured completion with instructor
     async with QUESTION_SEMAPHORE:
         res = client.chat.completions.create(
-            model="gpt-3.5-turbo",
+            model=model,
             messages=[{"role": "user", "content": prompt_text}],
+            max_tokens=100,
             response_model=QuestionAnswer,
         )
         logger.info(f"Question: {question_label}, Answer: {res.answer}")
@@ -159,6 +182,7 @@ def fill_auto_answers(
     return AutoAnswers(**fields)
 
 
+
 def format_answers_for_ui(answers: AutoAnswers) -> dict[str, Any]:
     """
     Convert each field in `answers` into the shape the React UI expects,
@@ -202,7 +226,7 @@ Text: {loss.description}
 Only respond with a single valid value from the list, or 'other-vehicle-damage' if unknown.
 """
     classification = client.chat.completions.create(
-        model="gpt-3.5-turbo",
+        model=model,
         messages=[{"role": "user", "content": classify_prompt}],
         response_model=ClassificationResponse,
         max_tokens=100,

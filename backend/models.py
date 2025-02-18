@@ -89,6 +89,11 @@ class AutoAnswers(BaseModel):
     vehicleDriverPhoneNumber: Optional[str] = None
     isVehicleDrivable: Optional[bool] = None
 
+# Define Pydantic model for list of relevant questions
+class RelevantQuestionList(BaseModel):
+    relevant_questions: List[Question]
+
+
 ##############################
 # Prepare the question set
 ##############################
