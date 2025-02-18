@@ -1,6 +1,24 @@
-from typing import Optional, List
+from typing import Optional, List, Union
 from enum import Enum
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
+
+class QuestionAnswer(BaseModel):
+    # We'll store a single string or "null"
+    # or for booleans 'true'/'false'
+    # We keep it as a string to avoid constant JSON parse issues
+    answer: Union[str, None]
+
+    @field_validator("answer")
+    def ensure_double_quotes(cls, v):
+        # Ensure the answer is always a string with double quotes
+        if isinstance(v, str):
+            return v
+        elif v is None:
+            return "null"
+        elif isinstance(v, bool):
+            return "true" if v else "false"
+        else:
+            return v
 
 # Standardized event types for auto claims
 class EventType(str, Enum):
@@ -18,6 +36,9 @@ class EventType(str, Enum):
 # Request model for loss description
 class LossDescription(BaseModel):
     description: str
+
+class ClassificationResponse(BaseModel):
+    event_type: str
 
 # Element types for form fields
 class ELEMENT(str, Enum):
@@ -49,36 +70,24 @@ class Question(BaseModel):
     validate: Optional[str] = None
     lovs: Optional[List[LOV]] = None
 
-# Answer types for questions
-class StringAnswer(BaseModel):
-    value: Optional[str] = None
-
-class BoolAnswer(BaseModel):
-    value: Optional[bool] = None
-
 # Aggregated answers for an auto claim
 class AutoAnswers(BaseModel):
-    eventType: StringAnswer
-    whichVehicleInvolved: StringAnswer
-    whoWasDriving: StringAnswer
-    otherDriverFirstName: StringAnswer
-    otherDriverLastName: StringAnswer
-    otherDriverPhoneNumber: StringAnswer
-    wasVehicleTowed: BoolAnswer
-    wasVehicleGlassDamaged: BoolAnswer
-    wereFatalities: BoolAnswer
-    wereInjuries: BoolAnswer
-    numOtherVehicles: StringAnswer
-    injuredParty: List[StringAnswer]
-    vehicleDriverFirstName: StringAnswer
-    vehicleDriverLastName: StringAnswer
-    vehicleDriverPhoneNumber: StringAnswer
-    isVehicleDrivable: BoolAnswer
-
-# Final blueprint response model combining questions and answers
-class BlueprintResponse(BaseModel):
-    questions: List[Question]
-    answers: AutoAnswers
+    eventType: Optional[str] = None
+    whichVehicleInvolved: Optional[str] = None
+    whoWasDriving: Optional[str] = None
+    otherDriverFirstName: Optional[str] = None
+    otherDriverLastName: Optional[str] = None
+    otherDriverPhoneNumber: Optional[str] = None
+    wasVehicleTowed: Optional[bool] = None
+    wasVehicleGlassDamaged: Optional[bool] = None
+    wereFatalities: Optional[bool] = None
+    wereInjuries: Optional[bool] = None
+    numOtherVehicles: Optional[str] = None
+    injuredParty: List[Optional[str]] = None 
+    vehicleDriverFirstName: Optional[str] = None
+    vehicleDriverLastName: Optional[str] = None
+    vehicleDriverPhoneNumber: Optional[str] = None
+    isVehicleDrivable: Optional[bool] = None
 
 ##############################
 # Prepare the question set
