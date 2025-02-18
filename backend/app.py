@@ -111,6 +111,7 @@ Question: Other Driver First Name, Answer: null
 </example>
 
 Answer that question accurately with a single string or 'null'. Base your answer on the policy holder's text and nothing else.
+If the user's description is about their vehicle, assume it is the primary vehicle in their policy unless they mention another car.
 If the answer to the question cannot be deduced from the user text, respond 'null'.
 If yes/no, respond 'true' or 'false' or 'null'.
 """
