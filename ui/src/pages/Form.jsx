@@ -28,7 +28,7 @@ const animate = {
 
 
 const Form = () => {
-
+    const answers = useStore(state => state.answers)
     const [generateForm, questions, isThinking] = useStore(useShallow(state => [state.generateForm, state.questions, state.isThinking]));
     useEffect(() => {
         generateForm()
@@ -40,6 +40,7 @@ const Form = () => {
     // }, [_answers])
 
     // const answer = useMemo((id) => answers[id].value, [answers])
+
 
     return (
         <Transition>
@@ -70,25 +71,37 @@ const Form = () => {
                     :
                     <motion.div key="not-thinking" className=" absolute w-full" {...animate}>
                         <div className="w-full flex flex-col items-center ">
+                            <div className="border-b pb-12">
 
-                            <h1 className="text-3xl text-center max-w-[500px] w-fit">
-                                We've filled out some answers as best as we can. <br />
 
-                            </h1>
-                            <p className="text-center mt-8 text-muted-foreground ">
-                                Please double check the form to complete the claim process.
-                            </p>
-                            <div className="flex flex-col gap-y-12 mt-12 pb-24">
-                                {questions.map((props, idx) => {
-                                    const { dependsOn, id, type, label, optional, validate, lovs } = props
-                                    return (true && <div key={idx} className="">
-                                        <p className="text-muted-foreground text-sm pb-4">
-                                            {label}
-                                        </p>
-                                        <Component {...props} />
-                                    </div>)
 
-                                })}
+                                <h1 className="text-3xl text-center max-w-[500px] w-fit">
+                                    We've filled out some answers as best as we can. <br />
+
+                                </h1>
+                                <p className="text-center mt-8 text-muted-foreground ">
+                                    Please double check the form to complete the claim process.
+                                </p>
+                            </div>
+                            <div className="flex flex-col gap-y-12 mt-18 pb-24">
+                                <AnimatePresence mode="popLayout">
+                                    {questions.map((props, idx) => {
+                                        const { dependsOn, id, type, label, optional, validate, lovs } = props
+
+                                        const shouldRender = dependsOn ? eval(`${dependsOn}`)(answers) === true : true
+
+                                        return (
+                                            shouldRender &&
+                                            <motion.div layout="preserve-aspect" key={idx + id} {...animate}>
+                                                <p className="text-muted-foreground text-sm pb-4">
+                                                    {label}
+                                                </p>
+                                                <Component {...props} />
+                                            </motion.div>
+                                        )
+
+                                    })}
+                                </AnimatePresence>
                             </div>
 
                         </div>
@@ -169,12 +182,12 @@ const Component = ({ dependsOn, id, type, label, optional, validate, lovs, ...pr
                     {lovs.map((lov, jdx) => {
                         const { value, label } = lov
                         return (
-                            
+
                             <div key={jdx} className="flex items-center space-x-2">
 
                                 <Checkbox
                                     key={jdx}
-                                    checked={answers[id] instanceof Array && answers[id].some(x=> x.value == value)}
+                                    checked={answers[id] instanceof Array && answers[id].some(x => x.value == value)}
                                     onCheckedChange={() => {
 
                                         let checkedList = answers[id]
