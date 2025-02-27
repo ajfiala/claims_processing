@@ -88,6 +88,8 @@ class AutoAnswers(BaseModel):
     vehicleDriverLastName: Optional[str] = None
     vehicleDriverPhoneNumber: Optional[str] = None
     isVehicleDrivable: Optional[bool] = None
+    insuredInjured: List[Optional[str]] = None 
+    whoElseWasInjured:  List[Optional[str]] = None 
 
 # Define Pydantic model for list of relevant questions
 class RelevantQuestionList(BaseModel):
@@ -198,6 +200,36 @@ QUESTIONS = [
         type=ELEMENT.YES_OR_NO,
         label="Injuries?",
         description="Indicate if there were injuries (fatalities imply injuries)."
+    ),
+    Question(
+        dependsOn="ans => ans?.eventType?.value == 'collision' && ans?.wereInjuries?.value == true",
+        id="insuredInjured",
+        type=ELEMENT.CHECKBOX,
+        label="Who On The Policy Was Injured?",
+        description="Only relevant for collision claims where there was an injury. Select which insured party was injured as a result of the collision",
+        lovs=[
+            LOV(
+                value="driver-1",
+                label="Billy BadDriver",
+                description="Main driver on the account; select if the collision is described in first person."
+            ),
+            LOV(value="other", label="Other"),
+            LOV(value="not-driven-when-damage-occured", label="Vehicle was not being driven at the time of damage"),
+        ],
+    ),
+    Question(
+        dependsOn="ans => ans?.eventType?.value == 'collision' && ans?.wereInjuries?.value == true",
+        id="whoElseWasInjured",
+        optional=True,
+        type=ELEMENT.CHECKBOX,
+        label="Was Anyone Else Injured?",
+        description="Only relevant for collision claims where there was an injury. Select one of the options pertaining on additional parties who were injured as a result of the collision",
+        lovs=[
+            LOV(value="one-or-more-passengers-in-my-vehicle", label="One Or More Passengers In My Vehicle"),
+            LOV(value="driver-of-another-vehicle", label="Driver Of Another Vehicle"),
+            LOV(value="one-or-more-passengers-in-another-vehicle", label="One Or More Passengers In Another Vehicle"),
+            LOV(value="one-or-more-pedestrians", label="One Or More Pedestrians"),
+        ]
     ),
     Question(
         dependsOn="ans => ['collision', 'injured-a-pedestrian'].includes(ans?.eventType?.value)",

@@ -18,6 +18,7 @@ import { Label } from "@/components/shadcn/label"
 import { RadioGroup, RadioGroupItem } from "@/components/shadcn/radio-group"
 import { Input } from "@/components/shadcn/input";
 import { Checkbox } from "@/components/shadcn/checkbox";
+import { useNavigate } from "react-router-dom";
 
 const animate = {
     initial: { opacity: 0.01 },
@@ -34,12 +35,7 @@ const Form = () => {
         generateForm()
     }, []);
 
-    // const [answers, setAnswers] = useState(_answers)
-    // useLayoutEffect(() => {
-    //     setTimeout(() => setAnswers(_answers), 500)
-    // }, [_answers])
-
-    // const answer = useMemo((id) => answers[id].value, [answers])
+    const navigate = useNavigate()
 
 
     return (
@@ -65,13 +61,11 @@ const Form = () => {
 
 
 
-
-
                 </motion.div>
                     :
                     <motion.div key="not-thinking" className=" absolute w-full" {...animate}>
                         <div className="w-full flex flex-col items-center ">
-                            <div className="border-b pb-12">
+                            <div className=" pb-0">
 
 
 
@@ -101,6 +95,12 @@ const Form = () => {
                                         )
 
                                     })}
+                                    {questions && questions.length && <motion.div key="submit-btn" layout="preserve-aspect" className="w-full flex justify-center mt-12">
+                                        <button disabled={false} className="btn" onClick={() => navigate("/claim/success")}>
+                                            Submit Claim
+                                        </button>
+                                    </motion.div>}
+
                                 </AnimatePresence>
                             </div>
 
@@ -109,17 +109,12 @@ const Form = () => {
                 }
 
 
+
             </AnimatePresence>
 
-            <div>
 
-            </div>
 
-            {/* <div className="w-full flex justify-center mt-24">
-            <button disabled={!value} className="btn" onClick={() => navigate("/claim/form")}>
-                Next
-            </button>
-        </div> */}
+
         </Transition>
 
     )

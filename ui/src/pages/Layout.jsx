@@ -3,10 +3,12 @@ import Avatar from "@/lib/assets/avatar.svg"
 import Restart from "@/lib/assets/refresh.svg"
 import Question from "@/lib/assets/question.svg"
 import { useNavigate } from "react-router-dom"
+import useStore from "@/lib/store";
 
 
 const Layout = ({ children, ...props }) => {
-    const navigate = useNavigate()
+    const navigate = useNavigate();
+    const reset = useStore(state => state.reset)
 
     return (
         <div className="relative w-full h-screen grid grid-rows-[70px_1fr] overflow-x-hidden">
@@ -19,7 +21,7 @@ const Layout = ({ children, ...props }) => {
                 </div>
 
                 <div className="ml-auto [&>*]:ml-6">
-                    <button className="cursor-pointer opacity-80 hover:opacity-100 transition-opacity">
+                    <button className="cursor-pointer opacity-80 hover:opacity-100 transition-opacity" onClick={() => {reset(); navigate("/")}}>
                         <Restart className="h-[24px]" />
                     </button>
                     <button className="cursor-pointer opacity-80 hover:opacity-100 transition-opacity">
