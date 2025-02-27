@@ -157,7 +157,7 @@ def fill_auto_answers(
                     fields[qid] = False
                 else:
                     fields[qid] = None
-            elif qid in ["injuredParty"]:
+            elif qid in ["injuredParty", "insuredInjured", "whoElseWasInjured"]:
                 # If it's a list, or "none", or something
                 # We'll do a naive parse: if val is "none" -> empty list
                 # if it's a comma separated list -> split

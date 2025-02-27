@@ -184,6 +184,63 @@ export const DUMMY_RES = {
             "lovs": null
         },
         {
+            "dependsOn": "ans => ans?.eventType?.value == 'collision' && ans?.wereInjuries?.value == true",
+            "id": "insuredInjured",
+            "type": "checkbox",
+            "description": "Only relevant for collision claims where there was an injury. Select which insured party was injured as a result of the collision",
+            "label": "Who On The Policy Was Injured?",
+            "optional": false,
+            "validate": null,
+            "lovs": [
+                {
+                    "value": "driver-1",
+                    "label": "Billy BadDriver",
+                    "description": "Main driver on the account; select if the collision is described in first person."
+                },
+                {
+                    "value": "other",
+                    "label": "Other",
+                    "description": null
+                },
+                {
+                    "value": "not-driven-when-damage-occured",
+                    "label": "Vehicle was not being driven at the time of damage",
+                    "description": null
+                }
+            ]
+        },
+        {
+            "dependsOn": "ans => ans?.eventType?.value == 'collision' && ans?.wereInjuries?.value == true",
+            "id": "whoElseWasInjured",
+            "type": "checkbox",
+            "description": "Only relevant for collision claims where there was an injury. Select one of the options pertaining on additional parties who were injured as a result of the collision",
+            "label": "Was Anyone Else Injured?",
+            "optional": true,
+            "validate": null,
+            "lovs": [
+                {
+                    "value": "one-or-more-passengers-in-my-vehicle",
+                    "label": "One Or More Passengers In My Vehicle",
+                    "description": null
+                },
+                {
+                    "value": "driver-of-another-vehicle",
+                    "label": "Driver Of Another Vehicle",
+                    "description": null
+                },
+                {
+                    "value": "one-or-more-passengers-in-another-vehicle",
+                    "label": "One Or More Passengers In Another Vehicle",
+                    "description": null
+                },
+                {
+                    "value": "one-or-more-pedestrians",
+                    "label": "One Or More Pedestrians",
+                    "description": null
+                }
+            ]
+        },
+        {
             "dependsOn": "ans => ['collision', 'injured-a-pedestrian'].includes(ans?.eventType?.value)",
             "id": "numOtherVehicles",
             "type": "numeric",
@@ -257,22 +314,22 @@ export const DUMMY_RES = {
     ],
     "answers": {
         "eventType": {
-            "value": "collision"
+            "value": "other-vehicle-damage"
         },
         "whichVehicleInvolved": {
-            "value": "2023-bmw-x1"
+            "value": "rental-car"
         },
         "whoWasDriving": {
             "value": "driver-1"
         },
         "otherDriverFirstName": {
-            "value": null
+            "value": "null"
         },
         "otherDriverLastName": {
-            "value": null
+            "value": "null"
         },
         "otherDriverPhoneNumber": {
-            "value": null
+            "value": "null"
         },
         "wasVehicleTowed": {
             "value": null
@@ -295,16 +352,26 @@ export const DUMMY_RES = {
             }
         ],
         "vehicleDriverFirstName": {
-            "value": null
+            "value": "null"
         },
         "vehicleDriverLastName": {
-            "value": null
+            "value": "null"
         },
         "vehicleDriverPhoneNumber": {
-            "value": null
+            "value": "null"
         },
         "isVehicleDrivable": {
-            "value": null
-        }
+            "value": false
+        },
+        "insuredInjured": [
+            {
+                "value": "driver-1"
+            }
+        ],
+        "whoElseWasInjured": [
+            {
+                "value": "null"
+            }
+        ]
     }
 }

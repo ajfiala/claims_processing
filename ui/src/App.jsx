@@ -6,6 +6,7 @@ import Layout from './pages/Layout'
 import Type from './pages/Type'
 import Describe from './pages/Describe'
 import Form from './pages/Form'
+import Success from './pages/Success';
 
 // TODO: Code split if app grows too big
 // const Home = lazy(() => import('./pages/Home'));
@@ -30,6 +31,10 @@ export const PATHS = [
     {
         path: "/claim/form", //TODO ?description="jdjdjndf"
         element: createElement(Form)
+    },
+    {
+        path: "/claim/success",
+        element: createElement(Success)
     }
 ]
 
