@@ -2,97 +2,80 @@
 set -e
 
 # Log start of configuration
-echo "Starting SageMaker notebook configuration"
+echo "Starting SageMaker notebook UV setup"
 
-# Update system packages
-sudo yum update -y
-
-# Install uv for better Python package management
-echo "Installing uv Python package manager"
-curl -LsSf https://astral.sh/uv/install.sh | sh
-
-# Add uv to the PATH - make sure this path is correct and actually exists
+# Define paths
 UV_BIN_PATH="$HOME/.local/bin"
+CLAIMS_DIR="/home/ec2-user/SageMaker/claims_processing/notebooks"
+SCRIPTS_DIR="/home/ec2-user/SageMaker/bin"
+JUPYTER_KERNELS_DIR="$HOME/.local/share/jupyter/kernels"
+
+# Clean up previous installation
+echo "Cleaning up previous installation..."
+
+# Remove previous kernels
+if [ -d "$JUPYTER_KERNELS_DIR/claims-processing-uv" ]; then
+    jupyter kernelspec remove -f claims-processing-uv
+fi
+
+if [ -d "$JUPYTER_KERNELS_DIR/uv-always-claims" ]; then
+    jupyter kernelspec remove -f uv-always-claims
+fi
+
+# Remove previous virtual environment
+if [ -d "$CLAIMS_DIR/.venv" ]; then
+    rm -rf "$CLAIMS_DIR/.venv"
+fi
+
+# Remove previous helper scripts
+if [ -d "$SCRIPTS_DIR" ]; then
+    rm -f "$SCRIPTS_DIR/uv-python-wrapper.sh" "$SCRIPTS_DIR/notebook-uv.sh"
+fi
+
+# Install uv
+echo "Installing uv"
+curl -LsSf https://astral.sh/uv/install.sh | sh
 export PATH="$UV_BIN_PATH:$PATH"
 
-# Explicitly verify uv is installed and in PATH
-if ! command -v uv &> /dev/null; then
-    echo "ERROR: uv command not found in PATH after installation!"
-    echo "Current PATH: $PATH"
-    echo "Checking if uv exists at $UV_BIN_PATH:"
-    ls -la $UV_BIN_PATH || echo "Directory doesn't exist!"
-    exit 1
-fi
-
-echo "uv successfully installed and in PATH: $(which uv)"
-
-# Add uv to PATH permanently - for all future sessions
+# Add uv to PATH permanently
+sed -i '/export PATH=".*\.local\/bin.*"/d' ~/.bashrc
 echo "export PATH=\"$UV_BIN_PATH:\$PATH\"" >> ~/.bashrc
-echo "export PATH=\"$UV_BIN_PATH:\$PATH\"" >> ~/.bash_profile
 
-# Create directory for the claims_processing project
-CLAIMS_DIR="/home/ec2-user/SageMaker/claims_processing"
-echo "Setting up claims_processing directory at $CLAIMS_DIR"
+# Create directories
 mkdir -p $CLAIMS_DIR
-
-# Clone the git repo if needed (assuming the repo URL is set as a parameter)
-if [ ! -d "$CLAIMS_DIR/.git" ]; then
-  echo "Initializing git repository in claims_processing folder"
-  cd $CLAIMS_DIR
-  git init
-fi
-
-# Set up uv in the claims_processing directory
-echo "Setting up uv virtual environment in claims_processing"
-cd $CLAIMS_DIR
-
-# Create a uv virtual environment
-echo "Creating uv virtual environment"
-$UV_BIN_PATH/uv venv --seed --link-mode=copy
-
-# Install required packages in the virtual environment
-echo "Installing required Python packages"
-source $CLAIMS_DIR/.venv/bin/activate
-
-# Verify path inside the virtual environment
-echo "PATH inside virtual environment: $PATH"
-echo "Python being used: $(which python)"
-echo "uv being used: $(which uv)"
-
-# Install packages using absolute path to uv
-$UV_BIN_PATH/uv pip install ipykernel jupyter pandas numpy matplotlib seaborn scikit-learn scipy boto3 jupyter jupyterlab \
-    ipywidgets plotly statsmodels nltk spacy sagemaker awswrangler psycopg2-binary
-
-# Register the uv environment as a Jupyter kernel
-echo "Creating Jupyter kernel for uv claims_processing"
-python -m ipykernel install --user --name=claims-processing-uv --display-name="Python (claims_processing uv)"
-
-# Create helper scripts directory
-SCRIPTS_DIR="/home/ec2-user/SageMaker/bin"
-echo "Creating helper scripts in $SCRIPTS_DIR"
 mkdir -p $SCRIPTS_DIR
 
-# Create uv Python wrapper with absolute path
+# Create virtual environment
+cd $CLAIMS_DIR
+echo "Creating uv virtual environment"
+$UV_BIN_PATH/uv venv --seed
+
+# Activate and install minimal packages
+source $CLAIMS_DIR/.venv/bin/activate
+echo "Installing ipykernel (required)"
+$UV_BIN_PATH/uv add ipykernel --no-deps
+$UV_BIN_PATH/uv add jupyter --no-deps
+$UV_BIN_PATH/uv add anthropic-bedrock --no-deps
+
+# Create helper scripts
 cat > $SCRIPTS_DIR/uv-python-wrapper.sh << EOF
 #!/bin/bash
-# Wrapper to run Python through uv
-UV_PATH="$UV_BIN_PATH/uv"
-\$UV_PATH run python "\$@"
+$UV_BIN_PATH/uv run python "\$@"
 EOF
 chmod +x $SCRIPTS_DIR/uv-python-wrapper.sh
 
-# Create notebook uv script with absolute path
 cat > $SCRIPTS_DIR/notebook-uv.sh << EOF
 #!/bin/bash
-# Execute uv commands from within a Jupyter notebook
 cd $CLAIMS_DIR
 source .venv/bin/activate
 $UV_BIN_PATH/uv "\$@"
 EOF
 chmod +x $SCRIPTS_DIR/notebook-uv.sh
 
-# Set up a Jupyter kernel that forces all execution through uv
-echo "Creating a Jupyter kernel that forces uv execution"
+# Create Jupyter kernels
+echo "Creating Jupyter kernels"
+python -m ipykernel install --user --name=claims-processing-uv --display-name="Python (claims_processing uv)"
+
 mkdir -p $HOME/.local/share/jupyter/kernels/uv-always-claims
 cat > $HOME/.local/share/jupyter/kernels/uv-always-claims/kernel.json << EOF
 {
@@ -106,43 +89,43 @@ cat > $HOME/.local/share/jupyter/kernels/uv-always-claims/kernel.json << EOF
  "display_name": "Python (claims_processing uv-always)",
  "language": "python",
  "env": {
-   "PATH": "$UV_BIN_PATH:$CLAIMS_DIR/.venv/bin:\${PATH}"
+   "PATH": "$UV_BIN_PATH:$CLAIMS_DIR/.venv/bin:\${PATH}",
+   "PYTHONPATH": "$CLAIMS_DIR/.venv/lib/python3.9/site-packages:\${PYTHONPATH:-}"
  }
 }
 EOF
 
-# Add the scripts directory to PATH for easy access
-echo "export PATH=\"$SCRIPTS_DIR:\$PATH\"" >> ~/.bashrc
-
-# Set up bash profile for Jupyter
-if [ -f $HOME/.bash_profile ]; then
-    echo "Updating .bash_profile with PATH settings"
-    echo "export PATH=\"$UV_BIN_PATH:$SCRIPTS_DIR:\$PATH\"" >> $HOME/.bash_profile
-fi
-
-# Add a test script to verify uv works in Jupyter
-cat > $CLAIMS_DIR/test_uv.py << EOF
+# Create magic command file for notebooks
+cat > $CLAIMS_DIR/uv_magic.py << EOF
+from IPython.core.magic import register_line_magic, Magics, magics_class
+import subprocess
 import sys
-import os
-print("Python executable:", sys.executable)
-print("PATH environment variable:", os.environ.get('PATH'))
-print("Working directory:", os.getcwd())
-try:
-    import subprocess
-    result = subprocess.run(['which', 'uv'], capture_output=True, text=True)
-    print("uv location:", result.stdout.strip() if result.returncode == 0 else "Not found")
-except Exception as e:
-    print("Error checking for uv:", str(e))
+
+@magics_class
+class UVMagics(Magics):
+    @register_line_magic
+    def uv(self, line):
+        cmd = ['$UV_BIN_PATH/uv'] + line.split()
+        try:
+            result = subprocess.run(cmd, capture_output=True, text=True, cwd='$CLAIMS_DIR')
+            print(result.stdout)
+            if result.stderr:
+                print(result.stderr, file=sys.stderr)
+            return result.returncode
+        except Exception as e:
+            print(f"Error executing uv command: {e}", file=sys.stderr)
+            return 1
+
+def load_ipython_extension(ipython):
+    ipython.register_magics(UVMagics)
 EOF
 
-echo "Notebook configuration complete. Available kernels:"
+echo "==================================================="
+echo "UV setup complete!"
+echo "Available kernels:"
 echo "- Python (claims_processing uv)"
 echo "- Python (claims_processing uv-always)"
 echo ""
-echo "To install additional packages, you can use:"
-echo "   !$SCRIPTS_DIR/notebook-uv.sh add <package-name>"
-echo ""
-echo "To run a Python script using uv, use:"
-echo "   $SCRIPTS_DIR/uv-python-wrapper.sh script.py"
-echo ""
-echo "A test script has been created at $CLAIMS_DIR/test_uv.py"
+echo "In notebooks, use: %load_ext uv_magic"
+echo "Then: %uv add <package-name> --no-deps"
+echo "==================================================="
