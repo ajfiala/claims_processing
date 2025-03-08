@@ -53,9 +53,9 @@ $UV_BIN_PATH/uv venv --seed
 # Activate and install minimal packages
 source $CLAIMS_DIR/.venv/bin/activate
 echo "Installing ipykernel (required)"
-$UV_BIN_PATH/uv add ipykernel --no-deps
-$UV_BIN_PATH/uv add jupyter --no-deps
-$UV_BIN_PATH/uv add anthropic-bedrock --no-deps
+$UV_BIN_PATH/uv add ipykernel 
+$UV_BIN_PATH/uv add jupyter 
+$UV_BIN_PATH/uv add anthropic-bedrock 
 
 # Create helper scripts
 cat > $SCRIPTS_DIR/uv-python-wrapper.sh << EOF
@@ -127,5 +127,5 @@ echo "- Python (claims_processing uv)"
 echo "- Python (claims_processing uv-always)"
 echo ""
 echo "In notebooks, use: %load_ext uv_magic"
-echo "Then: %uv add <package-name> --no-deps"
+echo "Then: %uv add <package-name> "
 echo "==================================================="
