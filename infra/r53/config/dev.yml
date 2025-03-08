@@ -1,0 +1,6 @@
+region: "us-east-1"
+domain_name: "bangkok.solutions"
+api_subdomain: "api"
+frontend_subdomain: "claims"
+alb_tag_key: "Application"
+alb_tag_value: "claims-api"

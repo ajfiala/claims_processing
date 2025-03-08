@@ -1,0 +1,20 @@
+region: "us-east-1"
+cluster_name: "claims-eks"
+account_id: "837065575994"
+cluster_version: "1.32"
+enable_public_access: true
+vpc_name: "claims-vpc"
+vpc_cidr: "10.0.0.0/16"
+node_groups:
+  general:
+    name: "general-node-group"
+    instance_types: ["t3.medium"]
+    desired_size: 1
+    min_size: 1
+    max_size: 3
+    disk_size: 20
+    labels:
+      role: "general"
+cluster_tags:
+  Application: "Claims Demo"
+  Environment: "development"

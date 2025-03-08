@@ -1,0 +1,9 @@
+region: "us-east-1"
+cloudfront_region: "us-east-1"
+domain_name: "bangkok.solutions"
+subject_alternative_names:
+  - "*.bangkok.solutions"
+  - "claims.bangkok.solutions"
+  - "api.bangkok.solutions"
+validation_method: "DNS"
+wait_for_validation: true

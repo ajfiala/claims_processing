@@ -1,0 +1,1 @@
+acm -> eks -> ecr -> cloudfront -> eks deployment -> route53
