@@ -1,271 +1,231 @@
-"""
-Example FastAPI application demonstrating how to build a minimal backend
-for a claims-UX First Notice of Loss (FNOL) flow using pydantic-ai for structured outputs.
-
-We mock a single "Auto" policy from "Coconut Insurance Bangkok," with:
-  - 1 named driver: "TEST TEST TEST" (driver-1)
-  - 1 insured vehicle: "2023 BMW X1" (2023-bmw-x1)
-
-We have a single endpoint, /claim, which accepts a loss description.
-Then we return a JSON payload containing:
-  - The questions (with dependsOn, id, type, etc.)
-  - A best-guess set of answers (in the "answers" field) 
-    based on the description you provided.
-
-You can run this via:
-    uv run uvicorn app:app --reload --port 8080
-"""
-from dotenv import load_dotenv
-from fastapi import FastAPI, Body
-from models import (
-    LossDescription,
-    EventType,
-    ClassificationResponse,
-    QuestionAnswer,
-    AutoAnswers,
-)
-import logging
-import time
-from starlette.middleware import Middleware
-import asyncio
-from openai import OpenAI
-import instructor 
-from typing import Any 
 import os
-from starlette.middleware.cors import CORSMiddleware
+import uuid
+import base64
+import mimetypes
+import asyncio
+from fastapi import FastAPI, File, UploadFile, HTTPException, Form
+from fastapi.responses import JSONResponse
+from fastapi.middleware.cors import CORSMiddleware
+from dotenv import load_dotenv
+from instructor import from_openai
+from openai import AsyncOpenAI
+from models import (
+    CarAngleCheckRequest,
+    CarAngleCheckResponse,
+    ImageDamageAnalysis,
+    CarAngle,
+    DamageReport
+)
 
 load_dotenv()
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
-logger = logging.getLogger(__name__)
+if not OPENAI_API_KEY:
+    raise RuntimeError("OPENAI_API_KEY not set in environment variables or .env file.")
 
-openai_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-client = instructor.from_openai(openai_client)
-model = "gpt-4-turbo"
+client = from_openai(AsyncOpenAI(api_key=OPENAI_API_KEY))
 
+app = FastAPI(title="Vehicle Damage Assessment API")
 
-# async semaphore for parallel requests
-QUESTION_SEMAPHORE = asyncio.Semaphore(30) 
-
-# The main application
-middleware = [
-    Middleware(
-        CORSMiddleware,
-        allow_origins=["http://localhost:5173"],
-        allow_credentials=True,
-        allow_methods=['*'],
-        allow_headers=['*']
-    )
-]
-
-app = FastAPI(
-    title="Coconut Insurance Bangkok",
-    description="Minimal backend using instructor for question-based extraction.",
-    version="0.0.1",
-    middleware=middleware,
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
-# We'll define a helper function that uses instructor to answer a single question
-async def fetch_answer_for_question(
-    description: str,
-    event_type: EventType,
-    question_id: str,
-    question_label: str,
-    question_type: str,
-    question_description: str | None,
-    possible_values: list[str] | None
-) -> str:
+TEMP_IMAGE_DIR = "temp_images"
+MAX_CONCURRENT_REQUESTS = 10
+
+os.makedirs(TEMP_IMAGE_DIR, exist_ok=True)
+
+@app.post("/check-angle", response_model=CarAngleCheckResponse)
+async def check_car_angle(
+    angle_check_req: CarAngleCheckRequest,
+    file: UploadFile = File(...)
+):
     """
-    We prompt the llm with a minimal question about the user text.
-    We want a single string or 'null'.
-    For yes/no, we want 'true'/'false' or 'null'.
-    We'll ask the model to produce a JSON conforming to QuestionAnswer schema.
+    Endpoint to verify a single uploaded image is indeed the specified angle 
+    (front, front_left, front_right, etc.).
+    Returns True/False along with a short reasoning in JSON.
+    
+    The client can decide to re-prompt user to re-upload if valid==False.
     """
-    prompt_text = f"""
-User text: {description}
-Event Type: {event_type.value}
-Policy holder: Billy Baddriver
+    try:
+        temp_filename = os.path.join(TEMP_IMAGE_DIR, f"{uuid.uuid4()}_{file.filename}")
+        with open(temp_filename, "wb") as f:
+            f.write(await file.read())
 
-You are an assistant for a First Notice of Loss (FNOL) flow for an insurance firm.
+        with open(temp_filename, "rb") as f:
+            image_bytes = f.read()
+        mime_type = mimetypes.guess_type(temp_filename)[0] or "image/jpeg"
+        encoded_image = base64.b64encode(image_bytes).decode("utf-8")
 
-We have a question:
-ID: {question_id}, Label: {question_label}, Type: {question_type}
-Possible Values: {possible_values or []}
-Question Description: {question_description or ''}
-
-<example>
-User text: I was in a car accident and my car was towed.
-Policy holder: Billy Baddriver
-Event Type: collision
-Question: Injuries?, Answer: null                 
-
-User text: I was rear ended and I hurt my head
-Policy holder: Billy Baddriver
-Event Type: collision
-Question: Injuries?, Answer: true
-
-User text: I was driving and a raccoon ate the passenger seat belt
-Policy holder: Billy Baddriver
-Event Type: damage-caused-by-animals
-Question: Other Driver First Name, Answer: null
-</example>
-
-Answer that question accurately with a single string or 'null'. Base your answer on the policy holder's text and nothing else.
-If the user's description is about their vehicle, assume it is the primary vehicle in their policy unless they mention another car.
-If the answer to the question cannot be deduced from the user text, respond 'null'.
-If yes/no, respond 'true' or 'false' or 'null'.
-"""
-
-    # We'll do a minimal structured completion with instructor
-    async with QUESTION_SEMAPHORE:
-        res = client.chat.completions.create(
-            model=model,
-            messages=[{"role": "user", "content": prompt_text}],
-            max_tokens=100,
-            response_model=QuestionAnswer,
+        prompt_text = (
+            f"Is this image a picture of a car at the angle '{angle_check_req.angle}'?\n"
+            f"Answer 'yes' or 'no', and provide reasoning in short."
         )
-        logger.info(f"Question: {question_label}, Answer: {res.answer}")
-        
-        return res.answer
 
-# fill out AutoAnswers from the question results
-def fill_auto_answers(
-    event_type_str: str,
-    answers_map: dict[str, str | None],
-) -> AutoAnswers:
+        response = await client.chat.completions.create(
+            model="gpt-4o", 
+            messages=[{
+                "role": "user",
+                "content": [
+                    {"type": "text", "text": prompt_text},
+                    {
+                        "type": "image_url",
+                        "image_url": {"url": f"data:{mime_type};base64,{encoded_image}"}
+                    }
+                ]
+            }],
+            response_model=CarAngleCheckResponse,
+            max_tokens=100,
+            temperature=0
+        )
+
+        try:
+            os.remove(temp_filename)
+        except:
+            raise HTTPException(status_code=500, detail="Failed to remove temp file.")
+
+        return response
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+async def analyze_single_image(angle, temp_path, semaphore):
+    """Helper function to analyze a single image with semaphore control"""
+    async with semaphore:
+        # Read and base64-encode the image
+        with open(temp_path, "rb") as f:
+            image_bytes = f.read()
+        mime_type = mimetypes.guess_type(temp_path)[0] or "image/jpeg"
+        encoded_image = base64.b64encode(image_bytes).decode("utf-8")
+
+        prompt_text = (
+            f"Analyze this car image at the angle '{angle}'. "
+            f"Identify any visible damage. If there is damage, "
+            f"describe it concisely in English and also in Thai."
+        )
+
+        # Let instructor directly return the Pydantic model
+        damage_analysis = await client.chat.completions.create(
+            model="gpt-4o",
+            messages=[{
+                "role": "user",
+                "content": [
+                    {"type": "text", "text": prompt_text},
+                    {
+                        "type": "image_url",
+                        "image_url": {"url": f"data:{mime_type};base64,{encoded_image}"}
+                    }
+                ]
+            }],
+            response_model=ImageDamageAnalysis,
+            max_tokens=300,
+            temperature=0
+        )
+        return damage_analysis
+
+
+@app.post("/analyze-images")
+async def analyze_images(
+    insured_name: str = Form(...),
+    vehicle_make: str = Form(...),
+    vehicle_model: str = Form(...),
+    front: UploadFile = File(...),
+    front_left: UploadFile = File(...),
+    front_right: UploadFile = File(...),
+    left: UploadFile = File(...),
+    right: UploadFile = File(...),
+    back: UploadFile = File(...),
+    back_left: UploadFile = File(...),
+    back_right: UploadFile = File(...)
+):
     """
-    Convert from the dictionary of question_id -> answer string
-    into the final AutoAnswers object.
-    We'll parse booleans, etc. 
+    Endpoint that receives 8 images for a single vehicle (one per angle).
+    1) Temporarily saves them.
+    2) Analyzes each image with a VLM to detect if there's damage.
+    3) Produces a bilingual Thai/English damage report only for the angles that have damage.
+    4) Removes the images afterwards.
     """
-    # build a dict we can pass to AutoAnswers
-    fields: dict[str, Any] = {}
-    # eventType is special
-    fields["eventType"] = event_type_str or None
 
-    # do a small map from question_id -> field_name in AutoAnswers
-    # e.g. "wasVehicleTowed" -> "wasVehicleTowed"
-    for qid, val in answers_map.items():
-        if qid in AutoAnswers.model_fields:
-            # We parse booleans if the question is yes/no or yes/no-or-unknown
-            # but we haven't stored question_type here, so let's do a naive parse
-            # if it's 'true' or 'false' we store a bool, else store the string or None
-            if qid in ["wasVehicleTowed","wasVehicleGlassDamaged","wereFatalities","wereInjuries","isVehicleDrivable"]:
-                if val == "true":
-                    fields[qid] = True
-                elif val == "false":
-                    fields[qid] = False
-                else:
-                    fields[qid] = None
-            elif qid in ["injuredParty", "insuredInjured", "whoElseWasInjured"]:
-                # If it's a list, or "none", or something
-                # We'll do a naive parse: if val is "none" -> empty list
-                # if it's a comma separated list -> split
-                if val and val.lower() != "none":
-                    splitted = [v.strip() for v in val.split(",")]
-                    fields[qid] = splitted
-                else:
-                    fields[qid] = []
-            else:
-                # numeric?
-                if qid == "numOtherVehicles":
-                    if val and val.isdigit():
-                        fields[qid] = val  # store the string integer
-                    else:
-                        fields[qid] = None
-                else:
-                    # store as string
-                    fields[qid] = val
-        else:
-            # unknown question id
-            pass
+    files_map = {
+        CarAngle.front: front,
+        CarAngle.front_left: front_left,
+        CarAngle.front_right: front_right,
+        CarAngle.left: left,
+        CarAngle.right: right,
+        CarAngle.back: back,
+        CarAngle.back_left: back_left,
+        CarAngle.back_right: back_right,
+    }
 
-    return AutoAnswers(**fields)
+    temp_files = {}
+    for angle, upload_file in files_map.items():
+        temp_filename = os.path.join(TEMP_IMAGE_DIR, f"{uuid.uuid4()}_{upload_file.filename}")
+        with open(temp_filename, "wb") as f:
+            f.write(await upload_file.read())
+        temp_files[angle] = temp_filename
 
-
-
-def format_answers_for_ui(answers: AutoAnswers) -> dict[str, Any]:
-    """
-    Convert each field in `answers` into the shape the React UI expects,
-    precisely matching the DUMMY_RES format.
-
-    - For checkbox questions, we return an array of objects: [ {"value": x}, ... ].
-    - For every other question type, we return a single object: { "value": answer }.
-    """
-    from models import QUESTIONS, ELEMENT
-
-    qtype_map = {q.id: q.type for q in QUESTIONS}
-    raw = answers.model_dump()
-    formatted = {}
-    for field_name, field_value in raw.items():
-        question_type = qtype_map.get(field_name)
-
-        if question_type == ELEMENT.CHECKBOX:
-            if field_value is None:
-                formatted[field_name] = []  # Empty array for null checkbox values
-            else:
-                formatted[field_name] = [{"value": v} for v in field_value] # Array of objects for checkboxes
-        else:
-            formatted[field_name] = {"value": field_value} # Wrap other types in {"value": ...}
-    return formatted
-
-@app.post("/form")
-async def create_form(loss: LossDescription = Body(...)):
-    """
-    1) Classify the event type
-    2) For each relevant question, fetch an answer in parallel with instructor
-    3) Build final AutoAnswers
-    4) Format for the UI
-    """
-    start_time = time.time()
-
-    # 1) classify
-    classify_prompt = f"""
-Classify the following text into one of these eventTypes: 
-{[e.value for e in EventType]}
-Text: {loss.description}
-Only respond with a single valid value from the list, or 'other-vehicle-damage' if unknown.
-"""
-    classification = client.chat.completions.create(
-        model=model,
-        messages=[{"role": "user", "content": classify_prompt}],
-        response_model=ClassificationResponse,
-        max_tokens=100,
-        temperature=0,
-    )
-
-    event_type_str = classification.event_type.strip()
-    if event_type_str not in [e.value for e in EventType]:
-        event_type_str = EventType.OTHER_VEHICLE_DAMAGE.value
-
-    # 2) for each question, build tasks
-    from models import QUESTIONS
+    # Create a semaphore to limit concurrent API calls
+    semaphore = asyncio.Semaphore(MAX_CONCURRENT_REQUESTS)
+    
+    # Create tasks for concurrent processing
     tasks = []
-    for q in QUESTIONS:
-        tasks.append(
-            fetch_answer_for_question(
-                description=loss.description,
-                event_type=EventType(event_type_str),
-                question_id=q.id,
-                question_label=q.label or "",
-                question_type=q.type.value,
-                question_description=q.description,
-                possible_values=[lov.value for lov in q.lovs] if q.lovs else []
+    for angle, temp_path in temp_files.items():
+        task = analyze_single_image(angle, temp_path, semaphore)
+        tasks.append(task)
+    
+    try:
+        damage_results = await asyncio.gather(*tasks)
+    except Exception as e:
+        for _, fp in temp_files.items():
+            try:
+                os.remove(fp)
+            except:
+                raise HTTPException(status_code=500, detail="Failed to remove temp files.")
+        raise HTTPException(status_code=500, detail=f"Damage analysis failed: {str(e)}")
+    
+    # 3) Generate bilingual Thai/English damage report
+    # Only for images that have damage
+    damage_items = []
+    for res in damage_results:
+        if res.is_damage:
+            angle_label = res.angle.value.replace("_", " ") 
+            item_text = f"{angle_label.title()}: {res.damage_description}"
+            damage_items.append(item_text)
+
+    if not damage_items:
+        report = DamageReport(
+            insured_name=insured_name,
+            vehicle_make=vehicle_make,
+            vehicle_model=vehicle_model,
+            damage_items=[],
+            summary_thai="ไม่พบความเสียหายใดๆ",
+            summary_english="No damage detected."
+        )
+    else:
+        report = DamageReport(
+            insured_name=insured_name,
+            vehicle_make=vehicle_make,
+            vehicle_model=vehicle_model,
+            damage_items=damage_items,
+            summary_thai=(
+                "พบความเสียหายตามรายการด้านบน โปรดติดต่อบริษัทประกันภัยเพื่อดำเนินการซ่อมแซม"
+            ),
+            summary_english=(
+                "Damage has been detected as listed above. Please contact the insurance provider for further repairs."
             )
         )
-    results = await asyncio.gather(*tasks)
-    qid_to_ans = {q.id: results[i] for i, q in enumerate(QUESTIONS)}
+    
+    # Cleanup temp files
+    for _, fp in temp_files.items():
+        try:
+            os.remove(fp)
+        except:
+            raise HTTPException(status_code=500, detail="Failed to remove temp files.")
 
-    # 3) build final AutoAnswers
-    auto_answers = fill_auto_answers(event_type_str, qid_to_ans)
-
-    # 4) shape for UI
-    shaped_answers = format_answers_for_ui(auto_answers)
-
-    end_time = time.time()
-    logger.info(f"Request processed in {end_time - start_time:.2f} seconds")
-
-    return {
-        "questions": QUESTIONS,
-        "answers": shaped_answers,
-    }
+    return JSONResponse(content=report.model_dump_json())

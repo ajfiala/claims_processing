@@ -1,0 +1,10 @@
+region: "us-east-1"
+bucket_name: "claims-frontend-static"
+domain_name: "claims.bangkok.solutions"
+price_class: "PriceClass_All"  # Use only North America and Europe
+default_ttl: 86400             # 1 day
+min_ttl: 0
+max_ttl: 31536000             # 1 year
+compress: true
+index_document: "index.html"
+error_document: "index.html"   # For SPA routing

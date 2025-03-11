@@ -1,22 +1,19 @@
 import { createElement, cloneElement } from 'react';
 import { useLocation, useOutlet } from "react-router-dom";
 import { AnimatePresence } from "framer-motion";
-import Layout from './pages/Layout'
+import Layout from './pages/Layout';
 
-import Type from './pages/Type'
-import Describe from './pages/Describe'
-import Form from './pages/Form'
+import Type from './pages/Type';
+import Describe from './pages/Describe';
+import Form from './pages/Form';
 import Success from './pages/Success';
-
-// TODO: Code split if app grows too big
-// const Home = lazy(() => import('./pages/Home'));
 
 function App() {
     return (
         <Layout>
             <Outlet />
         </Layout>
-    )
+    );
 }
 
 export const PATHS = [
@@ -29,19 +26,19 @@ export const PATHS = [
         element: createElement(Describe)
     },
     {
-        path: "/claim/form", //TODO ?description="jdjdjndf"
+        path: "/claim/form",
         element: createElement(Form)
     },
     {
         path: "/claim/success",
         element: createElement(Success)
     }
-]
+];
 
 const Outlet = () => {
     const location = useLocation();
     const element = useOutlet();
-
+    
     return (
         <AnimatePresence mode="sync" initial={false}>
             {element && cloneElement(element, { key: location.pathname })}
@@ -49,5 +46,4 @@ const Outlet = () => {
     );
 };
 
-
-export default App
+export default App;

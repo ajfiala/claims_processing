@@ -1,0 +1,25 @@
+meta {
+  name: analyze images
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{server}}/analyze-images
+  body: multipartForm
+  auth: none
+}
+
+body:multipart-form {
+  front: @file(/home/andrew/work/andy/claims_processing/notebooks/images/HondaFront.jpg)
+  front_left: @file(/home/andrew/work/andy/claims_processing/notebooks/images/HondaFrontLeft.jpg)
+  front_right: @file(/home/andrew/work/andy/claims_processing/notebooks/images/HondaFrontRight.jpg)
+  left: @file(/home/andrew/work/andy/claims_processing/notebooks/images/HondaLeft.jpg)
+  right: @file(/home/andrew/work/andy/claims_processing/notebooks/images/HondaRight.jpg)
+  back: @file(/home/andrew/work/andy/claims_processing/notebooks/images/HondaBack.jpg)
+  back_left: @file(/home/andrew/work/andy/claims_processing/notebooks/images/HondaBackLeft.jpg)
+  back_right: @file(/home/andrew/work/andy/claims_processing/notebooks/images/HondaBackRight.jpg)
+  insured_name: "John Doe"
+  vehicle_make: "Honda"
+  vehicle_model: "Fit"
+}

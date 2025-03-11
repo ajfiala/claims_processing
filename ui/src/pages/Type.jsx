@@ -5,8 +5,6 @@ import { useState } from "react"
 import { useNavigate } from "react-router-dom";
 import Transition from "../components/Transition";
 
-
-
 const Type = (props) => {
     const [selected, setSelected] = useState();
     const navigate = useNavigate()
@@ -23,8 +21,8 @@ const Type = (props) => {
             <div className="w-full flex justify-center mt-24 gap-x-12">
                 {
                     [
-                        { id: "auto", label: "Auto Claim", Icon: HomeCareIcon },
-                        { id: "home", label: "Home Claim", Icon: CarCareIcon },
+                        { id: "auto", label: "Home Claim", Icon: HomeCareIcon },
+                        { id: "home", label: "Auto Claim", Icon: CarCareIcon },
                     ].map(({ id, label, Icon }, idx) => (
                         <div data-selected={selected === id} key={idx} className="card"
                             onClick={() => selected === id ? setSelected(null) : setSelected(id)}

@@ -1,0 +1,24 @@
+---
+# Region configuration
+region: "us-east-1"
+
+# SageMaker configuration
+sagemaker:
+  role_name: "sagemaker-jupyter-role"
+  instance_name: "claims-demo-jupyter"
+  instance_type: "ml.t3.medium"
+  volume_size: 30
+  bucket_name: "claims-demo-jupyter-data"
+  enable_bucket_versioning: true
+  
+  # GitHub repository configuration
+  github_repo_name: "claims-processing"
+  github_repo_url: "https://github.com/ajfiala/claims_processing"
+  github_repo_secret_id: "arn:aws:secretsmanager:us-east-1:837065575994:secret:AmazonSageMaker-sagemaker-github-token-ZlP2WK"
+
+# Project tags
+tags:
+  Environment: "development"
+  Project: "ClaimsDemo" 
+  Component: "DataScience"
+  ManagedBy: "Terraform"

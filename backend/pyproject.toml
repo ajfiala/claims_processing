@@ -12,4 +12,5 @@ dependencies = [
     "python-dotenv>=1.0.1",
     "instructor>=1.7.2",
     "openai>=1.63.0",
+    "python-multipart>=0.0.20",
 ]

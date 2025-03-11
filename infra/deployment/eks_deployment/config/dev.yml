@@ -1,0 +1,23 @@
+region: "us-east-1"
+app_name: "claims-api"
+image_tag: "latest"
+replicas: 1
+container_port: 8080
+service_port: 80
+domain_name: "api.bangkok.solutions"
+health_check:
+  path: "/health"
+  liveness_initial: 60
+  liveness_period: 10
+  readiness_initial: 30
+  readiness_period: 5
+resources:
+  limits:
+    cpu: "500m"
+    memory: "512Mi"
+  requests:
+    cpu: "250m"
+    memory: "256Mi"
+container_env:
+  NODE_ENV: "production"
+  LOG_LEVEL: "info"
