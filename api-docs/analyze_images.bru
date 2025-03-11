@@ -1,0 +1,29 @@
+meta {
+  name: analyze-images
+  type: http
+  seq: 2
+}
+
+post {
+  # Adjust port/path if your FastAPI runs on a different port or base URL
+  url: http://localhost:8000/analyze-images
+  body: multipart
+  auth: none
+}
+
+body:multipart {
+  # These fields match the arguments in the /analyze-images endpoint
+  insured_name="John Doe"
+  vehicle_make="Honda"
+  vehicle_model="Civic"
+
+  # Each of the 8 angles must be provided as file uploads
+  front=@./test_images/HondaFront.jpg
+  front_left=@./test_images/HondaFrontLeft.jpg
+  front_right=@./test_images/HondaFrontRight.jpg
+  left=@./test_images/HondaLeft.jpg
+  right=@./test_images/HondaRight.jpg
+  back=@./test_images/HondaBack.jpg
+  back_left=@./test_images/HondaBackLeft.jpg
+  back_right=@./test_images/HondaBackRight.jpg
+}
