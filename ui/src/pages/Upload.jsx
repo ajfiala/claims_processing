@@ -96,7 +96,7 @@ const UploadFactory = ({title="Upload Front Photo", description="Please take 3 s
                         {photo?.name ?? ""}
                     </p>
                     <CloseIcon data-file={!!photo} className="absolute top-3 right-3 data-[file=true]:opacity-100 opacity-0 transition-opacity" onClick={clear}/>
-                    <img data-file={!!photo} src={sample} alt="sample photo" className="absolute w-[75px] rounded-lg top-2 left-2 data-[file=true]:opacity-100 opacity-0 transition-opacity"/>
+                    <img data-file={!!photo} src={sample} alt="sample photo" className="absolute h-[200px] rounded-lg mx-auto my-auto data-[file=true]:opacity-100 opacity-0 transition-opacity"/>
                 </label>
 
             </div>
