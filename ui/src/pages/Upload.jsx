@@ -22,9 +22,9 @@ const UploadFactory = ({title="Upload Front Photo", description="Please take 3 s
 
     const id = useMemo(() => scope?.carId ?? "", [scope]);
 
-    const sample = useMemo(() => id  ? getSample(id, orientation) : "", [id])
+    const sample = useMemo(() => id  ? getSample(id, orientation) : null, [id])
 
-    const model = useMemo(() => getModel(orientation) ?? "", [id]) 
+    const model = useMemo(() => getModel(orientation) ?? null, [id]) 
 
     const photo = photos[orientation]
 
