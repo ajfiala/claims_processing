@@ -20,7 +20,7 @@ const getSample = (id, orientation) => {
 const UploadFactory = ({title="Upload Front Photo", description="Please take 3 steps back and take a photo of the Front bumper", orientation="f", next="/claim/upload/2", ...props}) => {
     const [scope, photos, setPhoto] = useStore(useShallow((state) => [state.scope, state.photos, state.setPhoto]))
 
-    const id = useMemo(() => scope?.carId ?? "", [scope]);
+    const id = useMemo(() => scope?.policyId ?? "", [scope]);
 
     const sample = useMemo(() => id  ? getSample(id, orientation) : null, [id])
 

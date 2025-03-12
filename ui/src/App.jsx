@@ -5,6 +5,7 @@ import Layout from './pages/Layout';
 
 import Home from './pages/Home';
 import Upload from './pages/Upload';
+import Results from './pages/Results';
 
 function App() {
     return (
@@ -82,7 +83,11 @@ export const PATHS = [
             title="Upload Front Right Photo"
             description="Please take 3 steps back and take a photo of the Front Right bumper"
             orientation="fr"
-            next="" />)
+            next="/results" />)
+    },
+    {
+        path: "/results",
+        element: createElement(Results)
     }
 ];
 

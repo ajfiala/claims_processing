@@ -9,7 +9,7 @@ const Home = (props) => {
     const scope = useStore(state => state.scope)
     const setScope = useStore(state => state.setScope)
 
-    const selected = scope?.carId ?? null
+    const selected = scope?.policyId ?? null
 
     const navigate = useNavigate()
     return (
@@ -30,7 +30,7 @@ const Home = (props) => {
                         { id: "mazda-cx30", label: "Mazda CX-30", Icon: CarCareIcon },
                     ].map(({ id, label, Icon }, idx) => (
                         <div data-selected={selected === id} key={idx} className="card"
-                            onClick={() => selected === id ? setScope("carId", null) : setScope("carId", id)}
+                            onClick={() => selected === id ? setScope("policyId", null) : setScope("policyId", id)}
                         >
                             <div className="relative w-[40%] mt-[12%]">
                                 <Icon data-selected={selected === id} className="data-[selected=true]:text-primary text-transparent transition-colors"/>
