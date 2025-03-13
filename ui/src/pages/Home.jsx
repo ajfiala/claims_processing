@@ -1,12 +1,16 @@
-import HomeCareIcon from "@/lib/assets/home-care.svg"
 import CarCareIcon from "@/lib/assets/car-care.svg"
 import { Checkbox } from "@/components/shadcn/checkbox";
 import { useState } from "react"
 import { useNavigate } from "react-router-dom";
 import Transition from "../components/Transition";
+import useStore from "@/lib/store";
 
-const Type = (props) => {
-    const [selected, setSelected] = useState();
+const Home = (props) => {
+    const scope = useStore(state => state.scope)
+    const setScope = useStore(state => state.setScope)
+
+    const selected = scope?.policyId ?? null
+
     const navigate = useNavigate()
     return (
         <Transition>
@@ -14,18 +18,19 @@ const Type = (props) => {
                 <div>
                     <h1 className="text-3xl text-center ">
                         Hello, Bpom!<br />
-                        Please select your claim type.
+                        Select your policy to report a claim.
                     </h1>
                 </div>
             </div>
             <div className="w-full flex justify-center mt-24 gap-x-12">
                 {
                     [
-                        { id: "auto", label: "Home Claim", Icon: HomeCareIcon },
-                        { id: "home", label: "Auto Claim", Icon: CarCareIcon },
+                        { id: "honda-fit", label: "Honda Fit", Icon: CarCareIcon },
+                        { id: "lexus-s30", label: "Lexus ES30", Icon: CarCareIcon },
+                        { id: "mazda-cx30", label: "Mazda CX-30", Icon: CarCareIcon },
                     ].map(({ id, label, Icon }, idx) => (
                         <div data-selected={selected === id} key={idx} className="card"
-                            onClick={() => selected === id ? setSelected(null) : setSelected(id)}
+                            onClick={() => selected === id ? setScope("policyId", null) : setScope("policyId", id)}
                         >
                             <div className="relative w-[40%] mt-[12%]">
                                 <Icon data-selected={selected === id} className="data-[selected=true]:text-primary text-transparent transition-colors"/>
@@ -42,7 +47,7 @@ const Type = (props) => {
             </div>
             <div className="w-full flex justify-center mt-24">
                 <button disabled={!selected} className="btn"
-                    onClick={() => navigate("/claim/describe")}>
+                    onClick={() => navigate("/claim/upload/1")}>
                     Next
                 </button>
             </div>
@@ -50,4 +55,4 @@ const Type = (props) => {
     )
 }
 
-export default Type
+export default Home

@@ -1,88 +1,55 @@
 import { create } from 'zustand';
-import { getForm } from './api';
-import { getFormWithImage } from './api';
+import { analyzeImages } from './api';
 import { DUMMY_RES } from './constants';
 
 const INIT = {
-    description: "",
-    questions: [],
-    answers: {},
+    photos: {
+        f: null,
+        fl: null,
+        l: null,
+        bl: null,
+        b: null,
+        br: null,
+        r: null,
+        fr: null
+    },
     isThinking: false,
-    isDone: false,
-    imageFile: null,
-    imageDescription: null
-};
+    scope: {
+        policyId: null,
+        namedInsured: "John Doe",
+        make: "Honda",
+        model: "Fit"
+    },
+    results: null,
+}
 
 const useStore = create((set, get) => ({
     ...INIT,
 
-    setDescription: (description) => set(state => ({ ...state, description })),
-    
-    setImageFile: (imageFile) => set(state => ({ ...state, imageFile })),
+    setPhoto: (key, value) => set(state => ({ ...state, photos: {...state.photos, [key]: value}  })),
 
-    generateForm: async () => {
-        try {
-            set(state => ({ ...state, isThinking: true }));
-            
-            let res;
-            
-            // If we have an image, use the image API endpoint
-            if (get().imageFile) {
-                // NOTE: Uncomment if API is offline
-                // res = DUMMY_RES
-                
-                res = await getFormWithImage(get().description, get().imageFile);
-            } else {
-                // NOTE: Uncomment if API is offline
-                // res = DUMMY_RES
-                
-                res = await getForm(get().description);
-            }
-            
-            // Store the image description if available
-            const imageDescription = res.image_description || null;
-            
-            set(state => ({ 
-                ...state, 
-                ...res, 
-                imageDescription,
-                isDone: true 
-            }));
-        }
-        catch (e) {
-            console.error("Error generating form:", e);
-        }
-        finally {
-            set(state => ({ ...state, isThinking: false }));
-        }
-    },
+    setScope: (key, value) => set(state => ({ ...INIT, scope: {...INIT.scope, [key]: value}  })),
 
-    setAnswer: (key, answer) => {
-        set((state) => 
-        ({ ...state,
-            answers: {
-                ...state.answers,
-                [key]: {
-                    ...state.answers[key],
-                    value: answer
-                }
-            }})
-        );
-    },
-
-    setAnswerRaw: (key, answer) => {
-        set((state) => 
-        ({ ...state,
-            answers: {
-                ...state.answers,
-                [key]: answer
-            }})
-        );
+    analyze: async () => {
+        const {f, fl, l, bl, b, br, r, fr} = get().photos
+        const {namedInsured, make, model} = get().scope
+        try{
+            set(state => ({...state, isThinking: true}))
+            const res = await analyzeImages(namedInsured, make, model, f, fl, l, bl, b, br, r, fr);
+            console.log(res)
+            set(state => ({...state, results: res}))
+        }
+        catch(e){
+            console.error(e)
+        }
+        finally{
+            set(state => ({...state, isThinking: false}))
+        }
     },
 
     reset: () => {
-        set(state => ({ ...state, ...INIT }));
+        set(state => ({ ...state, ...INIT }))
     }
-}));
+}))
 
 export default useStore;
