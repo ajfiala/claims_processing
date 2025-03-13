@@ -1,3 +1,4 @@
+# app.py
 import os
 import uuid
 import base64
@@ -37,26 +38,15 @@ app.add_middleware(
 
 TEMP_IMAGE_DIR = "temp_images"
 MAX_CONCURRENT_REQUESTS = 10
-
 os.makedirs(TEMP_IMAGE_DIR, exist_ok=True)
 
+
 @app.post("/check-angle", response_model=CarAngleCheckResponse)
-async def check_car_angle(
-    angle_check_req: CarAngleCheckRequest,
-    file: UploadFile = File(...)
-):
-    """
-    Endpoint to verify a single uploaded image is indeed the specified angle 
-    (front, front_left, front_right, etc.).
-    Returns True/False along with a short reasoning in JSON.
-    
-    The client can decide to re-prompt user to re-upload if valid==False.
-    """
+async def check_car_angle(angle_check_req: CarAngleCheckRequest, file: UploadFile = File(...)):
     try:
         temp_filename = os.path.join(TEMP_IMAGE_DIR, f"{uuid.uuid4()}_{file.filename}")
         with open(temp_filename, "wb") as f:
             f.write(await file.read())
-
         with open(temp_filename, "rb") as f:
             image_bytes = f.read()
         mime_type = mimetypes.guess_type(temp_filename)[0] or "image/jpeg"
@@ -83,7 +73,6 @@ async def check_car_angle(
             max_tokens=100,
             temperature=0
         )
-
         try:
             os.remove(temp_filename)
         except:
@@ -96,9 +85,7 @@ async def check_car_angle(
 
 
 async def analyze_single_image(angle, temp_path, semaphore):
-    """Helper function to analyze a single image with semaphore control"""
     async with semaphore:
-        # Read and base64-encode the image
         with open(temp_path, "rb") as f:
             image_bytes = f.read()
         mime_type = mimetypes.guess_type(temp_path)[0] or "image/jpeg"
@@ -110,7 +97,6 @@ async def analyze_single_image(angle, temp_path, semaphore):
             f"describe it concisely in English and also in Thai."
         )
 
-        # Let instructor directly return the Pydantic model
         damage_analysis = await client.chat.completions.create(
             model="gpt-4o",
             messages=[{
@@ -144,14 +130,6 @@ async def analyze_images(
     back_left: UploadFile = File(...),
     back_right: UploadFile = File(...)
 ):
-    """
-    Endpoint that receives 8 images for a single vehicle (one per angle).
-    1) Temporarily saves them.
-    2) Analyzes each image with a VLM to detect if there's damage.
-    3) Produces a bilingual Thai/English damage report only for the angles that have damage.
-    4) Removes the images afterwards.
-    """
-
     files_map = {
         CarAngle.front: front,
         CarAngle.front_left: front_left,
@@ -164,16 +142,17 @@ async def analyze_images(
     }
 
     temp_files = {}
+    
+    # Read and store all uploaded files
     for angle, upload_file in files_map.items():
         temp_filename = os.path.join(TEMP_IMAGE_DIR, f"{uuid.uuid4()}_{upload_file.filename}")
         with open(temp_filename, "wb") as f:
-            f.write(await upload_file.read())
+            file_content = await upload_file.read()
+            f.write(file_content)
         temp_files[angle] = temp_filename
 
-    # Create a semaphore to limit concurrent API calls
     semaphore = asyncio.Semaphore(MAX_CONCURRENT_REQUESTS)
     
-    # Create tasks for concurrent processing
     tasks = []
     for angle, temp_path in temp_files.items():
         task = analyze_single_image(angle, temp_path, semaphore)
@@ -186,15 +165,14 @@ async def analyze_images(
             try:
                 os.remove(fp)
             except:
-                raise HTTPException(status_code=500, detail="Failed to remove temp files.")
+                pass
         raise HTTPException(status_code=500, detail=f"Damage analysis failed: {str(e)}")
     
-    # 3) Generate bilingual Thai/English damage report
-    # Only for images that have damage
     damage_items = []
+    
     for res in damage_results:
         if res.is_damage:
-            angle_label = res.angle.value.replace("_", " ") 
+            angle_label = res.angle.value.replace("_", " ")
             item_text = f"{angle_label.title()}: {res.damage_description}"
             damage_items.append(item_text)
 
@@ -213,19 +191,16 @@ async def analyze_images(
             vehicle_make=vehicle_make,
             vehicle_model=vehicle_model,
             damage_items=damage_items,
-            summary_thai=(
-                "พบความเสียหายตามรายการด้านบน โปรดติดต่อบริษัทประกันภัยเพื่อดำเนินการซ่อมแซม"
-            ),
-            summary_english=(
-                "Damage has been detected as listed above. Please contact the insurance provider for further repairs."
-            )
+            summary_thai="พบความเสียหายตามรายการด้านบน โปรดติดต่อบริษัทประกันภัยเพื่อดำเนินการซ่อมแซม",
+            summary_english="Damage has been detected as listed above. Please contact the insurance provider for further repairs."
         )
-    
-    # Cleanup temp files
+
     for _, fp in temp_files.items():
         try:
             os.remove(fp)
         except:
-            raise HTTPException(status_code=500, detail="Failed to remove temp files.")
+            pass
 
-    return JSONResponse(content=report.model_dump_json())
+    return JSONResponse(
+        content=report.to_markdown()
+    )
