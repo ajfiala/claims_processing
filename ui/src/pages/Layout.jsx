@@ -41,8 +41,8 @@ const Layout = ({ children, ...props }) => {
                     </div>
                 </div>
             </nav>
-            <div className="hidden sm:fixed w-full h-full pointer-events-none z-10">
-                <button disabled={location.pathname === "/"} className="widget p-12 mt-[80px] pointer-events-auto disabled:opacity-0" onClick={() => navigate(-1)}>
+            <div className="hidden xs:block fixed top-0 left-0 w-full h-full pointer-events-none z-10">
+                <button disabled={location.pathname === "/"} className="widget xs:p-4 sm:p-12 mt-[80px] pointer-events-auto disabled:opacity-0" onClick={() => navigate(-1)}>
                     <BackIcon />
                 </button>
             </div>
