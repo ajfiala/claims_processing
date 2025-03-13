@@ -25,7 +25,7 @@ const Home = (props) => {
                     </h1>
                 </div>
             </div>
-            <div className="w-full flex justify-center mt-24 gap-x-12">
+            <div className="w-full flex flex-col sm:flex-row justify-center mt-24 gap-12 px-2">
                 {
                     [
                         { id: "honda-fit", label: "Honda Fit", Icon: CarCareIcon },
@@ -48,7 +48,7 @@ const Home = (props) => {
                     ))
                 }
             </div>
-            <div className="w-full flex justify-center mt-24">
+            <div className="w-full flex justify-center py-24">
                 <button disabled={!selected} className="btn"
                     onClick={() => navigate("/claim/upload/1")}>
                     {t('btn.next')}
