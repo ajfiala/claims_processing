@@ -17,14 +17,14 @@ const getSample = (id, orientation) => {
 }
 
 
-const UploadFactory = ({title="Upload Front Photo", description="Please take 3 steps back and take a photo of the Front bumper", orientation="f", next="/claim/upload/2", ...props}) => {
+const UploadFactory = ({ title = "Upload Front Photo", description = "Please take 3 steps back and take a photo of the Front bumper", orientation = "f", next = "/claim/upload/2", ...props }) => {
     const [scope, photos, setPhoto] = useStore(useShallow((state) => [state.scope, state.photos, state.setPhoto]))
 
     const id = useMemo(() => scope?.policyId ?? "", [scope]);
 
-    const sample = useMemo(() => id  ? getSample(id, orientation) : null, [id])
+    const sample = useMemo(() => id ? getSample(id, orientation) : null, [id])
 
-    const model = useMemo(() => getModel(orientation) ?? null, [id]) 
+    const model = useMemo(() => getModel(orientation) ?? null, [id])
 
     const photo = photos[orientation]
 
@@ -45,8 +45,8 @@ const UploadFactory = ({title="Upload Front Photo", description="Please take 3 s
         if (ref.current) {
             const res = await fetch(sample);
             if (!res.ok) {
-              console.error(`Failed to fetch file: ${res.statusText}`);
-              return
+                console.error(`Failed to fetch file: ${res.statusText}`);
+                return
             }
             const blob = await res.blob();
 
@@ -57,7 +57,7 @@ const UploadFactory = ({title="Upload Front Photo", description="Please take 3 s
         }
     }, [scope])
 
-    const clear = (e) =>{
+    const clear = (e) => {
         e.preventDefault()
         if (ref.current) {
             ref.current.value = '';
@@ -66,57 +66,71 @@ const UploadFactory = ({title="Upload Front Photo", description="Please take 3 s
     }
 
     return (
-        <Transition>
-            <div className="flex justify-center ">
-                <div>
-                    <h1 className="text-3xl text-center ">
-                        {title}
-                    </h1>
-                    <p className="text-muted-foreground mt-2">
-                        {description}
-                    </p>
+        <>
+            <Transition>
+                <div className="flex justify-center ">
+                    <div>
+                        <h1 className="text-3xl text-center ">
+                            {title}
+                        </h1>
+                        <p className="text-muted-foreground mt-2">
+                            {description}
+                        </p>
 
-                    <img src={model} className="dark:invert opacity-50 w-[300px] mx-auto mt-12 select-none" alt="car model"/>
+                        <img src={model} className="dark:invert opacity-50 xs:h-[110px] mx-auto mt-12 select-none" alt="car model" />
+                    </div>
                 </div>
-            </div>
-            <div className="flex justify-center mt-24 ">
+                <div className="flex justify-center mt-16 ">
 
-                <input
-                    ref={ref}
-                    type="file"
-                    id="file"
-                    hidden
-                    name="file"
-                    accept=".pdf,.png" // TODO: pdf no work good
-                    onChange={handleFileChange}
-                />
-                <label htmlFor="file" className="relative max-w-[500px] w-full h-[300px] border border-dashed rounded-md flex flex-col gap-y-2 items-center justify-center text-muted-foreground cursor-pointer">
-                    <ImportIcon />
-                    <p data-file={!!photo} className="text-sm h-[20px] data-[file=true]:opacity-100 opacity-0 transition-opacity">
-                        {photo?.name ?? ""}
-                    </p>
-                    <CloseIcon data-file={!!photo} className="absolute top-3 right-3 data-[file=true]:opacity-100 opacity-0 transition-opacity" onClick={clear}/>
-                    <img data-file={!!photo} src={sample} alt="sample photo" className="absolute h-[200px] rounded-lg mx-auto my-auto data-[file=true]:opacity-100 opacity-0 transition-opacity"/>
-                </label>
+                    <input
+                        ref={ref}
+                        type="file"
+                        id="file"
+                        hidden
+                        name="file"
+                        accept=".pdf,.png" // TODO: pdf no work good
+                        onChange={handleFileChange}
+                    />
+                    <label htmlFor="file" className="relative max-w-[500px] w-full h-[300px] border border-dashed rounded-md flex flex-col gap-y-2 items-center justify-center text-muted-foreground cursor-pointer">
+                        <ImportIcon />
+                        <p data-file={!!photo} className="text-sm h-[20px] data-[file=true]:opacity-100 opacity-0 transition-opacity">
+                            {photo?.name ?? ""}
+                        </p>
+                        <CloseIcon data-file={!!photo} className="absolute top-3 right-3 data-[file=true]:opacity-100 opacity-0 transition-opacity" onClick={clear} />
+                        <img data-file={!!photo} src={sample} alt="sample photo" className="absolute h-[200px] rounded-lg mx-auto my-auto data-[file=true]:opacity-100 opacity-0 transition-opacity" />
+                    </label>
 
-            </div>
-            <div className="w-full flex justify-center pt-16 pb-6">
+                </div>
+
                 <div className="flex flex-col">
 
-                    <p className="text-center mb-12 text-muted-foreground text-sm hover:text-foreground transition-colors cursor-pointer select-none" onClick={uploadSample}>
-                        or Use Sample File 
+                    <p className="text-center py-12 text-muted-foreground text-sm hover:text-foreground transition-colors cursor-pointer select-none" onClick={uploadSample}>
+                        or Use Sample File
                     </p>
 
+                </div>
 
-                    <button disabled={!photo} className="btn"
-                        onClick={() => navigate(next)}>
+
+                <div className="h-24" />
+
+
+            </Transition>
+            <div className="fixed top-0 left-0 w-screen h-screen pointer-events-none">
+
+
+                <footer className="absolute bottom-0 left-0 bg-background w-full flex justify-center items-center h-24 border-t pointer-events-auto">
+
+
+                    <button disabled={!photo} className="btn mb-1"
+                        onClick={() => navigate(next, { scroll: false })}>
                         Next
                     </button>
 
 
-                </div>
+
+                </footer>
             </div>
-        </Transition>
+        </>
     )
 }
 
