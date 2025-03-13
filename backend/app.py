@@ -15,7 +15,8 @@ from models import (
     CarAngleCheckResponse,
     ImageDamageAnalysis,
     CarAngle,
-    DamageReport
+    DamageReportEnglish,
+    DamageReportThai
 )
 
 load_dotenv()
@@ -84,7 +85,7 @@ async def check_car_angle(angle_check_req: CarAngleCheckRequest, file: UploadFil
         raise HTTPException(status_code=500, detail=str(e))
 
 
-async def analyze_single_image(angle, temp_path, semaphore):
+async def analyze_single_image_english(angle, temp_path, semaphore):
     async with semaphore:
         with open(temp_path, "rb") as f:
             image_bytes = f.read()
@@ -115,6 +116,37 @@ async def analyze_single_image(angle, temp_path, semaphore):
         )
         return damage_analysis
 
+async def analyze_single_image_thai(angle, temp_path, semaphore):
+    async with semaphore:
+        with open(temp_path, "rb") as f:
+            image_bytes = f.read()
+        mime_type = mimetypes.guess_type(temp_path)[0] or "image/jpeg"
+        encoded_image = base64.b64encode(image_bytes).decode("utf-8")
+
+        prompt_text = (
+            f"โปรดวิเคราะห์ภาพถ่ายรถยนต์จากมุม '{angle}' อย่างละเอียด "
+            "ระบุความเสียหายที่มองเห็นได้อย่างชัดเจน หากพบความเสียหาย "
+            "ให้บรรยายลักษณะความเสียหายโดยละเอียดในรูปแบบที่ผู้สำรวจภัยประกันภัยรถยนต์ใช้ "
+            "สำคัญ: คำอธิบายความเสียหายต้องเป็นภาษาไทยเท่านั้น"
+        )
+
+        damage_analysis = await client.chat.completions.create(
+            model="gpt-4o",
+            messages=[{
+                "role": "user",
+                "content": [
+                    {"type": "text", "text": prompt_text},
+                    {
+                        "type": "image_url",
+                        "image_url": {"url": f"data:{mime_type};base64,{encoded_image}"}
+                    }
+                ]
+            }],
+            response_model=ImageDamageAnalysis,
+            max_tokens=300,
+            temperature=0
+        )
+        return damage_analysis
 
 @app.post("/analyze-images")
 async def analyze_images(
@@ -140,7 +172,7 @@ async def analyze_images(
         CarAngle.back_left: back_left,
         CarAngle.back_right: back_right,
     }
-
+    
     temp_files = {}
     
     # Read and store all uploaded files
@@ -150,17 +182,22 @@ async def analyze_images(
             file_content = await upload_file.read()
             f.write(file_content)
         temp_files[angle] = temp_filename
-
+    
     semaphore = asyncio.Semaphore(MAX_CONCURRENT_REQUESTS)
     
-    tasks = []
+    tasks_en = []
+    tasks_th = []
     for angle, temp_path in temp_files.items():
-        task = analyze_single_image(angle, temp_path, semaphore)
-        tasks.append(task)
+        task_en = analyze_single_image_english(angle, temp_path, semaphore)
+        task_th = analyze_single_image_thai(angle, temp_path, semaphore)
+        tasks_en.append(task_en)
+        tasks_th.append(task_th)
     
     try:
-        damage_results = await asyncio.gather(*tasks)
+        damage_results_en = await asyncio.gather(*tasks_en)
+        damage_results_th = await asyncio.gather(*tasks_th)
     except Exception as e:
+        # Clean up temp files
         for _, fp in temp_files.items():
             try:
                 os.remove(fp)
@@ -168,39 +205,71 @@ async def analyze_images(
                 pass
         raise HTTPException(status_code=500, detail=f"Damage analysis failed: {str(e)}")
     
-    damage_items = []
-    
-    for res in damage_results:
+    # Process English damage items
+    damage_items_en = []
+    for res in damage_results_en:
         if res.is_damage:
             angle_label = res.angle.value.replace("_", " ")
             item_text = f"{angle_label.title()}: {res.damage_description}"
-            damage_items.append(item_text)
-
-    if not damage_items:
-        report = DamageReport(
+            damage_items_en.append(item_text)
+    
+    # Process Thai damage items
+    damage_items_th = []
+    for res in damage_results_th:
+        if res.is_damage:
+            # Convert angle names to Thai if you have translations
+            # For now using the same structure as English
+            angle_label = res.angle.value.replace("_", " ")
+            item_text = f"{angle_label.title()}: {res.damage_description}"
+            damage_items_th.append(item_text)
+    
+    # Create English report
+    if not damage_items_en:
+        report_en = DamageReportEnglish(
             insured_name=insured_name,
             vehicle_make=vehicle_make,
             vehicle_model=vehicle_model,
             damage_items=[],
-            summary_thai="ไม่พบความเสียหายใดๆ",
-            summary_english="No damage detected."
+            summary="No damage detected."
         )
     else:
-        report = DamageReport(
+        report_en = DamageReportEnglish(
             insured_name=insured_name,
             vehicle_make=vehicle_make,
             vehicle_model=vehicle_model,
-            damage_items=damage_items,
-            summary_thai="พบความเสียหายตามรายการด้านบน โปรดติดต่อบริษัทประกันภัยเพื่อดำเนินการซ่อมแซม",
-            summary_english="Damage has been detected as listed above. Please contact the insurance provider for further repairs."
+            damage_items=damage_items_en,
+            summary="Damage has been detected as listed above. Please contact the insurance provider for further repairs."
         )
-
+    
+    # Create Thai report
+    if not damage_items_th:
+        report_th = DamageReportThai(
+            insured_name=insured_name,
+            vehicle_make=vehicle_make,
+            vehicle_model=vehicle_model,
+            damage_items=[],
+            summary="ไม่พบความเสียหายใดๆ"
+        )
+    else:
+        report_th = DamageReportThai(
+            insured_name=insured_name,
+            vehicle_make=vehicle_make,
+            vehicle_model=vehicle_model,
+            damage_items=damage_items_th,
+            summary="พบความเสียหายตามรายการด้านบน โปรดติดต่อบริษัทประกันภัยเพื่อดำเนินการซ่อมแซม"
+        )
+    
+    # Clean up temp files
     for _, fp in temp_files.items():
         try:
             os.remove(fp)
         except:
             pass
-
+    
+    # Return both reports
     return JSONResponse(
-        content=report.to_markdown()
+        content={
+            "english_report": report_en.to_markdown(),
+            "thai_report": report_th.to_markdown()
+        }
     )
