@@ -4,6 +4,7 @@ import { useState } from "react"
 import { useNavigate } from "react-router-dom";
 import Transition from "../components/Transition";
 import useStore from "@/lib/store";
+import { useTranslation } from 'react-i18next';
 
 const Home = (props) => {
     const scope = useStore(state => state.scope)
@@ -11,14 +12,16 @@ const Home = (props) => {
 
     const selected = scope?.policyId ?? null
 
-    const navigate = useNavigate()
+    const navigate = useNavigate();
+
+    const { t, i18n } = useTranslation()
     return (
         <Transition>
             <div className="flex justify-center ">
                 <div>
                     <h1 className="text-3xl text-center ">
-                        Hello, Bpom!<br />
-                        Select your policy to report a claim.
+                        {t("home.title1")}<br />
+                        {t("home.title2")}
                     </h1>
                 </div>
             </div>
@@ -48,7 +51,7 @@ const Home = (props) => {
             <div className="w-full flex justify-center mt-24">
                 <button disabled={!selected} className="btn"
                     onClick={() => navigate("/claim/upload/1")}>
-                    Next
+                    {t('btn.next')}
                 </button>
             </div>
         </Transition>
