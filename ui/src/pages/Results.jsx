@@ -5,37 +5,41 @@ import Transition from "@/components/Transition";
 import { useMemo, useState, useEffect } from "react";
 import SuccessIcon from "@/lib/assets/success.svg"
 import { useNavigate } from "react-router-dom";
-import ReactMarkdown from "react-markdown";
+import ReactMarkdown from 'react-markdown'
 import { useTranslation } from 'react-i18next';
 
+// Image component with fallback and error handling
 const DamageImage = ({ src, alt }) => {
     const [imageLoaded, setImageLoaded] = useState(false);
     const [error, setError] = useState(false);
     const [retryWithAlternate, setRetryWithAlternate] = useState(false);
-    const angle = alt?.toLowerCase().replace(" damage", "").replace(" ", "_");
 
+    // Extract angle from alt text (e.g., "Front damage" -> "front")
+    const angle = alt?.toLowerCase().replace(' damage', '').replace(' ', '_');
+
+    // Try with alternate URL if the primary URL fails
     const imageUrl = useMemo(() => {
         if (retryWithAlternate) {
+            // Try uploaded photo if available
             const photos = window.store?.getState()?.photos;
             const storeKey = {
-                front: "f",
-                front_left: "fl",
-                front_right: "fr",
-                left: "l",
-                right: "r",
-                back: "b",
-                back_left: "bl",
-                back_right: "br",
+                "front": "f", "front_left": "fl", "front_right": "fr",
+                "left": "l", "right": "r", "back": "b",
+                "back_left": "bl", "back_right": "br"
             }[angle];
+
             if (photos && storeKey && photos[storeKey] instanceof File) {
                 return URL.createObjectURL(photos[storeKey]);
             }
+
+            // Try sample image as last resort
             const policyId = window.store?.getState()?.scope?.policyId;
             return policyId ? `/sample/${policyId}/${storeKey}.jpg` : null;
         }
         return src;
     }, [src, angle, retryWithAlternate]);
 
+    // Handle error by trying alternate source
     const handleError = () => {
         if (!retryWithAlternate) {
             setRetryWithAlternate(true);
@@ -47,9 +51,9 @@ const DamageImage = ({ src, alt }) => {
 
     if (error || !imageUrl) {
         return (
-            <div className="p-6 rounded border bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-100 my-4 text-center">
+            <div className="bg-gray-800 p-6 rounded border  text-gray-400 my-4 text-center">
                 Image could not be loaded
-                <p className="text-sm mt-2">{alt}</p>
+                <p className="text-sm text-gray-400 mt-2">{alt}</p>
             </div>
         );
     }
@@ -61,61 +65,55 @@ const DamageImage = ({ src, alt }) => {
                 alt={alt || "Vehicle damage"}
                 onLoad={() => setImageLoaded(true)}
                 onError={handleError}
-                className={`max-w-full rounded-md border shadow-md max-h-64 mx-auto transition-opacity duration-300 ${imageLoaded ? "opacity-100" : "opacity-0"
-                    }`}
+                className={`max-w-full rounded-md border shadow-md max-h-64 mx-auto ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
+                style={{ transition: 'opacity 0.3s' }}
             />
-            <p className="text-sm text-gray-600 dark:text-gray-300 mt-2">{alt}</p>
+            <p className="text-sm text-gray-400 mt-2">{alt}</p>
         </div>
     );
 };
 
+// Custom styling for Markdown components
 const markdownComponents = {
-    h1: ({ node, ...props }) => (
-        <h1 className="text-2xl font-bold mb-2 border-b border-gray-300 dark:border-gray-700 pb-2 text-gray-900 dark:text-gray-100" {...props} />
-    ),
-    h2: ({ node, ...props }) => (
-        <h2 className="text-xl font-semibold mt-6 mb-3 border-b border-gray-300 dark:border-gray-700 pb-1 text-gray-900 dark:text-gray-100" {...props} />
-    ),
-    p: ({ node, ...props }) => (
-        <p className="my-2 text-gray-800 dark:text-gray-200 leading-relaxed" {...props} />
-    ),
-    strong: ({ node, ...props }) => (
-        <strong className="font-semibold text-gray-900 dark:text-gray-100" {...props} />
-    ),
-    em: ({ node, ...props }) => (
-        <em className="italic text-gray-800 dark:text-gray-200" {...props} />
-    ),
-    hr: () => <hr className="my-4 border-t border-gray-300 dark:border-gray-700" />,
-    li: ({ node, ...props }) => <li className="ml-4 my-1 text-gray-800 dark:text-gray-200" {...props} />,
+    h1: ({ node, ...props }) => <h1 className="text-2xl font-bold mb-2 border-b  pb-2" {...props} />,
+    h2: ({ node, ...props }) => <h2 className="text-xl font-semibold mt-6 mb-3 border-b  pb-1" {...props} />,
+    p: ({ node, ...props }) => <p className="my-2" {...props} />,
+    strong: ({ node, ...props }) => <span className="font-bold" {...props} />,
+    em: ({ node, ...props }) => <span className="italic text-muted-foreground" {...props} />,
+    hr: () => <hr className="my-4 border-t " />,
+    li: ({ node, ...props }) => <li className="ml-4 my-1" {...props} />,
     ul: ({ node, ...props }) => <ul className="my-2" {...props} />,
     ol: ({ node, ...props }) => <ol className="my-2 list-decimal ml-4" {...props} />,
-    img: ({ node, ...props }) => <DamageImage {...props} />,
+    img: ({ node, ...props }) => <DamageImage {...props} />
 };
 
 const animate = {
     initial: { opacity: 0.01 },
     animate: { opacity: 1 },
-    exit: { opacity: 0 },
+    exit: { opacity: 0, },
     transition: { type: "spring", stiffness: 100, damping: 20 },
 };
 
+// Map angle keys in markdown to correct image filenames
 const angleToFilename = {
-    front: "front.jpg",
-    front_left: "front-left.jpg",
-    front_right: "front-right.jpg",
-    left: "left.jpg",
-    right: "right.jpg",
-    back: "back.jpg",
-    back_left: "back-left.jpg",
-    back_right: "back-right.jpg",
+    "front": "front.jpg",
+    "front_left": "front-left.jpg",
+    "front_right": "front-right.jpg",
+    "left": "left.jpg",
+    "right": "right.jpg",
+    "back": "back.jpg",
+    "back_left": "back-left.jpg",
+    "back_right": "back-right.jpg"
 };
 
+// Process markdown to replace image placeholders with actual URLs
 const processMarkdown = (markdown) => {
     if (!markdown) return "";
+
     return markdown.replace(
         /!\[(.*?)\]\((image_placeholder_for_(.*?))\)/g,
         (match, alt, placeholder, angle) => {
-            const filename = angleToFilename[angle] || `${angle.replace("_", "-")}.jpg`;
+            const filename = angleToFilename[angle] || `${angle.replace('_', '-')}.jpg`;
             return `![${alt}](/analyze-images/${filename})`;
         }
     );
@@ -125,20 +123,17 @@ const Results = () => {
     const [results, analyze, isThinking, scope, photos, reset] = useStore(
         useShallow((state) => [state.results, state.analyze, state.isThinking, state.scope, state.photos, state.reset])
     );
+
+    // Make store available to image components for fallback
+    useEffect(() => {
+        window.store = { getState: () => ({ scope, photos }) };
+        return () => { delete window.store; };
+    }, [scope, photos]);
+
     const isSuccess = useMemo(() => !!results, [results]);
     const processedResults = useMemo(() => processMarkdown(results), [results]);
     const navigate = useNavigate();
-
     const { t } = useTranslation();
-
-    
-
-    useEffect(() => {
-        window.store = { getState: () => ({ scope, photos }) };
-        return () => {
-            delete window.store;
-        };
-    }, [scope, photos]);
 
     useEffect(() => {
         analyze();
@@ -151,7 +146,9 @@ const Results = () => {
                     <motion.div key="thinking" {...animate} className="absolute w-full">
                         <div className="flex justify-center">
                             <div>
-                                <h1 className="text-3xl text-center text-gray-800 dark:text-gray-100">{t('results.loading')}</h1>
+                                <h1 className="text-3xl text-center">
+                                    {t('results.loading')}
+                                </h1>
                             </div>
                         </div>
                         <div className="px-4 flex justify-center w-full mt-12" {...animate}>
@@ -162,7 +159,7 @@ const Results = () => {
                     <motion.div key="not-thinking" className="absolute w-full pb-12" {...animate}>
                         <div className="flex justify-center px-2">
                             <div>
-                                <h1 className="text-3xl text-center text-gray-800 dark:text-gray-100">
+                            <   h1 className="text-3xl text-center text-gray-800 dark:text-gray-100">
                                     {t(`results.${isSuccess ? "success" : "error"}.title`)}
                                 </h1>
                                 <p className="mt-2 text-center text-gray-600 dark:text-gray-300">
@@ -177,15 +174,14 @@ const Results = () => {
                                 ) : (
                                     <>
                                         <SuccessIcon className="text-[limegreen] w-full max-w-[120px] mb-6 mt-4" />
-                                        <div className="sm:px-6 py-12 rounded-md sm:shadow-2xl max-w-3xl w-full my-6 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700">
-                                            <ReactMarkdown components={markdownComponents}>{processedResults}</ReactMarkdown>
+                                        <div className="sm:px-6 py-12 rounded-md sm:shadow-2xl max-w-3xl w-full my-6 sm:border  dark:bg-gray-900 ">
+                                            <ReactMarkdown components={markdownComponents}>
+                                                {processedResults}
+                                            </ReactMarkdown>
                                         </div>
                                         <button
-                                            className="btn btn-secondary px-4 py-2 mt-12 text-gray-800 dark:text-gray-100 bg-gray-200 dark:bg-gray-800 rounded hover:bg-gray-300 dark:hover:bg-gray-700 transition-colors"
-                                            onClick={() => {
-                                                reset();
-                                                navigate("/");
-                                            }}
+                                            className="btn btn-secondary px-4 py-2 mt-12"
+                                            onClick={() => {reset(); navigate("/")}}
                                         >
                                             {t('btn.uploadAnother')}
                                         </button>
