@@ -35,7 +35,7 @@ const Home = (props) => {
                         <div data-selected={selected === id} key={idx} className="card"
                             onClick={() => selected === id ? setScope("policyId", null) : setScope("policyId", id)}
                         >
-                            <div className="relative w-[40%] mt-[12%]">
+                            <div className="relative w-[40%] mt-[12%] flex justify-center">
                                 <Icon data-selected={selected === id} className="data-[selected=true]:text-primary text-transparent transition-colors"/>
                             </div>
                             <h2 className="font-bold mt-4">
