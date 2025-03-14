@@ -15,7 +15,7 @@ const Layout = ({ children, ...props }) => {
     return (
         <div className="relative w-full h-screen grid grid-rows-[70px_1fr] overflow-x-hidden">
             <div />
-            <nav className="fixed top-0 left-0 h-[70px] w-full border-b flex items-center px-8  bg-primary shadow-2xl dark:bg-background dark:shadow-none z-50">
+            <nav className="fixed top-0 left-0 h-[70px] w-full border-b flex items-center px-8   dark:shadow-2xl dark:bg-background dark:shadow-none z-50">
                 <Logo className="h-[35px] cursor-pointer" onClick={() => navigate("/")} />
 
                 <div className="absolute right-[calc(50%-25px)] -bottom-[25px] w-[50px] h-[50px] flex items-center justify-center rounded-full border p-3 bg-background pointer-events-none">
