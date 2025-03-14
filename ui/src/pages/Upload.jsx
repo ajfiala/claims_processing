@@ -80,7 +80,7 @@ const UploadFactory = ({ orientation = "f", next = "/claim/upload/2", ...props }
                             {t(`upload.${orientation}.description`)}
                         </p>
 
-                        <img src={model} className="dark:invert opacity-50 xs:h-[110px] mx-auto mt-12 select-none" alt="car model" />
+                        <img src={model} className="dark:invert opacity-50 h-[85px] xs:h-[110px] mx-auto mt-12 select-none" alt="car model" />
                     </div>
                 </div>
                 <div className="flex justify-center mt-16 ">
