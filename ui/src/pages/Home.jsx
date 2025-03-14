@@ -4,7 +4,6 @@ import { useState } from "react"
 import { useNavigate } from "react-router-dom";
 import Transition from "../components/Transition";
 import useStore from "@/lib/store";
-import { useTranslation } from 'react-i18next';
 
 const Home = (props) => {
     const scope = useStore(state => state.scope)
@@ -14,14 +13,13 @@ const Home = (props) => {
 
     const navigate = useNavigate();
 
-    const { t, i18n } = useTranslation()
     return (
         <Transition>
             <div className="flex justify-center ">
                 <div>
                     <h1 className="text-3xl text-center ">
-                        {t("home.title1")}<br />
-                        {t("home.title2")}
+                        Hello, I'm Mr. Rocket!<br />
+                        Select a policy to report a claim.
                     </h1>
                 </div>
             </div>
@@ -51,7 +49,7 @@ const Home = (props) => {
             <div className="w-full flex justify-center py-24">
                 <button disabled={!selected} className="btn"
                     onClick={() => navigate("/claim/upload/1")}>
-                    {t('btn.next')}
+                    Next
                 </button>
             </div>
         </Transition>

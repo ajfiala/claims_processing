@@ -6,7 +6,6 @@ import { useNavigate } from "react-router-dom";
 import { useShallow } from "zustand/react/shallow";
 import { useCallback } from "react";
 import useStore from "@/lib/store";
-import { useTranslation } from 'react-i18next';
 
 
 const getModel = (orientation) => {
@@ -18,10 +17,8 @@ const getSample = (id, orientation) => {
 }
 
 
-const UploadFactory = ({ orientation = "f", next = "/claim/upload/2", ...props }) => {
+const UploadFactory = ({ title, description, orientation = "f", next = "/claim/upload/2", ...props }) => {
     const [scope, photos, setPhoto] = useStore(useShallow((state) => [state.scope, state.photos, state.setPhoto]))
-
-    const { t } = useTranslation();
 
     const id = useMemo(() => scope?.policyId ?? "", [scope]);
 
@@ -74,10 +71,10 @@ const UploadFactory = ({ orientation = "f", next = "/claim/upload/2", ...props }
                 <div className="flex justify-center ">
                     <div>
                         <h1 className="text-3xl text-center ">
-                            {t(`upload.${orientation}.title`)}
+                            { title}
                         </h1>
                         <p className="text-muted-foreground mt-2">
-                            {t(`upload.${orientation}.description`)}
+                            {description}
                         </p>
 
                         <img src={model} className="dark:invert opacity-50 h-[85px] xs:h-[110px] mx-auto mt-12 select-none" alt="car model" />
@@ -108,7 +105,7 @@ const UploadFactory = ({ orientation = "f", next = "/claim/upload/2", ...props }
                 <div className="flex flex-col">
 
                     <p className="text-center py-12 text-muted-foreground text-sm hover:text-foreground transition-colors cursor-pointer select-none" onClick={uploadSample}>
-                        {t('upload.btn.useSample')}
+                        or Use Sample Photo
                     </p>
 
                 </div>
@@ -126,7 +123,7 @@ const UploadFactory = ({ orientation = "f", next = "/claim/upload/2", ...props }
 
                     <button disabled={!photo} className="btn mb-1"
                         onClick={() => navigate(next, { scroll: false })}>
-                        {t('btn.next')}
+                        Next
                     </button>
 
 

@@ -6,7 +6,6 @@ import { useMemo, useState, useEffect } from "react";
 import SuccessIcon from "@/lib/assets/success.svg"
 import { useNavigate } from "react-router-dom";
 import ReactMarkdown from 'react-markdown'
-import { useTranslation } from 'react-i18next';
 
 // Image component with fallback and error handling
 const DamageImage = ({ src, alt }) => {
@@ -119,7 +118,6 @@ const processMarkdown = (markdown) => {
     );
 };
 
-// Fix the Results component to properly handle both reports
 const Results = () => {
     const [results, analyze, isThinking, scope, photos, reset] = useStore(
         useShallow((state) => [state.results, state.analyze, state.isThinking, state.scope, state.photos, state.reset])
@@ -132,33 +130,8 @@ const Results = () => {
     }, [scope, photos]);
 
     const isSuccess = useMemo(() => !!results, [results]);
-    const { t, i18n } = useTranslation();
+    const processedResults = useMemo(() => processMarkdown(results), [results]);
     const navigate = useNavigate();
-    
-    // Parse the results object to get both reports
-    const { english_report, thai_report } = useMemo(() => {
-        if (!results) return { english_report: "", thai_report: "" };
-        
-        try {
-            // If results is already an object use it directly
-            if (typeof results === 'object') {
-                return results;
-            }
-            // If results is a string, try to parse it as JSON
-            return JSON.parse(results);
-        } catch (e) {
-            console.error("Failed to parse results:", e);
-            return { english_report: "", thai_report: "" };
-        }
-    }, [results]);
-    
-    const currentReport = useMemo(() => {
-        return i18n.language === "th" ? thai_report : english_report;
-    }, [english_report, thai_report, i18n.language]);
-    
-    const processedReport = useMemo(() => {
-        return processMarkdown(currentReport);
-    }, [currentReport]);
 
     useEffect(() => {
         analyze();
@@ -172,7 +145,7 @@ const Results = () => {
                         <div className="flex justify-center">
                             <div>
                                 <h1 className="text-3xl text-center">
-                                    {t('results.loading')}
+                                    Processing Images ...
                                 </h1>
                             </div>
                         </div>
@@ -184,31 +157,33 @@ const Results = () => {
                     <motion.div key="not-thinking" className="absolute w-full pb-12" {...animate}>
                         <div className="flex justify-center px-2">
                             <div>
-                                <h1 className="text-3xl text-center text-gray-800 dark:text-gray-100">
-                                    {t(`results.${isSuccess ? "success" : "error"}.title`)}
+                                <   h1 className="text-3xl text-center text-gray-800 dark:text-gray-100">
+                                    {isSuccess ? "Your Upload was successful" : "We Found the Following Issues"}
                                 </h1>
                                 <p className="mt-2 text-center text-gray-600 dark:text-gray-300">
-                                    {t(`results.${isSuccess ? "success" : "error"}.description`)}
+                                    {isSuccess
+                                        ? "We were able to determine the following issues with your vehicle."
+                                        : "Please check the issues and upload another form."}
                                 </p>
                             </div>
                         </div>
                         <div className="flex justify-center my-8">
                             <div className="flex flex-col items-center">
                                 {!isSuccess ? (
-                                    <>{t('results.error.message')}</>
+                                    <>Oops something went wrong</>
                                 ) : (
                                     <>
                                         <SuccessIcon className="text-[limegreen] w-full max-w-[120px] mb-6 mt-4" />
-                                        <div className="sm:px-6 py-12 rounded-md sm:shadow-2xl max-w-3xl w-full my-6 sm:border dark:bg-gray-900">
+                                        <div className="sm:px-6 py-12 rounded-md sm:shadow-2xl max-w-3xl w-full my-6 sm:border  dark:bg-gray-900 ">
                                             <ReactMarkdown components={markdownComponents}>
-                                                {processedReport}
+                                                {processedResults}
                                             </ReactMarkdown>
                                         </div>
                                         <button
                                             className="btn btn-secondary px-4 py-2 mt-12"
-                                            onClick={() => {reset(); navigate("/")}}
+                                            onClick={() => { reset(); navigate("/") }}
                                         >
-                                            {t('btn.uploadAnother')}
+                                            Upload Another
                                         </button>
                                     </>
                                 )}
