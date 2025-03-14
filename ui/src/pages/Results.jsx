@@ -119,6 +119,7 @@ const processMarkdown = (markdown) => {
     );
 };
 
+// Fix the Results component to properly handle both reports
 const Results = () => {
     const [results, analyze, isThinking, scope, photos, reset] = useStore(
         useShallow((state) => [state.results, state.analyze, state.isThinking, state.scope, state.photos, state.reset])
@@ -131,9 +132,33 @@ const Results = () => {
     }, [scope, photos]);
 
     const isSuccess = useMemo(() => !!results, [results]);
-    const processedResults = useMemo(() => processMarkdown(results), [results]);
+    const { t, i18n } = useTranslation();
     const navigate = useNavigate();
-    const { t } = useTranslation();
+    
+    // Parse the results object to get both reports
+    const { english_report, thai_report } = useMemo(() => {
+        if (!results) return { english_report: "", thai_report: "" };
+        
+        try {
+            // If results is already an object use it directly
+            if (typeof results === 'object') {
+                return results;
+            }
+            // If results is a string, try to parse it as JSON
+            return JSON.parse(results);
+        } catch (e) {
+            console.error("Failed to parse results:", e);
+            return { english_report: "", thai_report: "" };
+        }
+    }, [results]);
+    
+    const currentReport = useMemo(() => {
+        return i18n.language === "th" ? thai_report : english_report;
+    }, [english_report, thai_report, i18n.language]);
+    
+    const processedReport = useMemo(() => {
+        return processMarkdown(currentReport);
+    }, [currentReport]);
 
     useEffect(() => {
         analyze();
@@ -159,7 +184,7 @@ const Results = () => {
                     <motion.div key="not-thinking" className="absolute w-full pb-12" {...animate}>
                         <div className="flex justify-center px-2">
                             <div>
-                            <   h1 className="text-3xl text-center text-gray-800 dark:text-gray-100">
+                                <h1 className="text-3xl text-center text-gray-800 dark:text-gray-100">
                                     {t(`results.${isSuccess ? "success" : "error"}.title`)}
                                 </h1>
                                 <p className="mt-2 text-center text-gray-600 dark:text-gray-300">
@@ -174,9 +199,9 @@ const Results = () => {
                                 ) : (
                                     <>
                                         <SuccessIcon className="text-[limegreen] w-full max-w-[120px] mb-6 mt-4" />
-                                        <div className="sm:px-6 py-12 rounded-md sm:shadow-2xl max-w-3xl w-full my-6 sm:border  dark:bg-gray-900 ">
+                                        <div className="sm:px-6 py-12 rounded-md sm:shadow-2xl max-w-3xl w-full my-6 sm:border dark:bg-gray-900">
                                             <ReactMarkdown components={markdownComponents}>
-                                                {processedResults}
+                                                {processedReport}
                                             </ReactMarkdown>
                                         </div>
                                         <button
