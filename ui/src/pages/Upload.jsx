@@ -6,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 import { useShallow } from "zustand/react/shallow";
 import { useCallback } from "react";
 import useStore from "@/lib/store";
+import { useTranslation } from 'react-i18next';
 
 
 const getModel = (orientation) => {
@@ -17,8 +18,10 @@ const getSample = (id, orientation) => {
 }
 
 
-const UploadFactory = ({ title = "Upload Front Photo", description = "Please take 3 steps back and take a photo of the Front bumper", orientation = "f", next = "/claim/upload/2", ...props }) => {
+const UploadFactory = ({ orientation = "f", next = "/claim/upload/2", ...props }) => {
     const [scope, photos, setPhoto] = useStore(useShallow((state) => [state.scope, state.photos, state.setPhoto]))
+
+    const { t } = useTranslation();
 
     const id = useMemo(() => scope?.policyId ?? "", [scope]);
 
@@ -71,13 +74,13 @@ const UploadFactory = ({ title = "Upload Front Photo", description = "Please tak
                 <div className="flex justify-center ">
                     <div>
                         <h1 className="text-3xl text-center ">
-                            {title}
+                            {t(`upload.${orientation}.title`)}
                         </h1>
                         <p className="text-muted-foreground mt-2">
-                            {description}
+                            {t(`upload.${orientation}.description`)}
                         </p>
 
-                        <img src={model} className="dark:invert opacity-50 xs:h-[110px] mx-auto mt-12 select-none" alt="car model" />
+                        <img src={model} className="dark:invert opacity-50 h-[85px] xs:h-[110px] mx-auto mt-12 select-none" alt="car model" />
                     </div>
                 </div>
                 <div className="flex justify-center mt-16 ">
@@ -105,7 +108,7 @@ const UploadFactory = ({ title = "Upload Front Photo", description = "Please tak
                 <div className="flex flex-col">
 
                     <p className="text-center py-12 text-muted-foreground text-sm hover:text-foreground transition-colors cursor-pointer select-none" onClick={uploadSample}>
-                        or Use Sample File
+                        {t('upload.btn.useSample')}
                     </p>
 
                 </div>
@@ -123,7 +126,7 @@ const UploadFactory = ({ title = "Upload Front Photo", description = "Please tak
 
                     <button disabled={!photo} className="btn mb-1"
                         onClick={() => navigate(next, { scroll: false })}>
-                        Next
+                        {t('btn.next')}
                     </button>
 
 
