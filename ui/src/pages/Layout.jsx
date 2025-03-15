@@ -7,11 +7,20 @@ import { Switch } from "@/components/shadcn/switch";
 import { Label } from "@/components/shadcn/label";
 
 import { useTranslation } from 'react-i18next';
+import { useEffect } from "react";
 
 const Layout = ({ children, ...props }) => {
     const navigate = useNavigate();
-    const reset = useStore(state => state.reset)
+    const reset = useStore(state => state.reset);
+    const scope = useStore(state => state.scope);
     const { t, i18n } = useTranslation()
+
+    // navigate home if you're fooling around on a page you shouldn't or we'll send Ton' to fix you up good
+    useEffect(() => {
+        if(!scope?.policyId){
+            navigate("/")
+        }
+    }, [navigate])
 
 
     return (

@@ -23,7 +23,7 @@ const UploadFactory = ({ orientation = "f", next = "/claim/upload/2", ...props }
 
     const [usingSample, setUsingSample] = useState(false);
 
-    const photoDebounce = useRef(null)
+    const photoDebounce = useRef(photos[orientation])
 
     const { t } = useTranslation();
 
