@@ -65,7 +65,7 @@ const DamageImage = ({ src, alt }) => {
                 alt={alt || "Vehicle damage"}
                 onLoad={() => setImageLoaded(true)}
                 onError={handleError}
-                className={`max-w-full rounded-md border shadow-md max-h-64 mx-auto ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
+                className={`max-w-full rounded-md border max-h-64 mx-auto ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
                 style={{ transition: 'opacity 0.3s' }}
             />
             <p className="text-sm text-gray-400 mt-2">{alt}</p>
@@ -199,7 +199,7 @@ const Results = () => {
                                 ) : (
                                     <>
                                         <SuccessIcon className="text-[limegreen] w-full max-w-[120px] mb-6 mt-4" />
-                                        <div className="sm:px-6 py-12 rounded-md sm:shadow-2xl max-w-3xl w-full my-6 sm:border dark:bg-gray-900">
+                                        <div className="sm:px-6 py-12 rounded-md sm:shadow-2xl dark:shadow-none max-w-3xl w-full my-6 sm:border">
                                             <ReactMarkdown components={markdownComponents}>
                                                 {processedReport}
                                             </ReactMarkdown>

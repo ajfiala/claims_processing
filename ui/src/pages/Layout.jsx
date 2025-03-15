@@ -1,6 +1,5 @@
 
 import Restart from "@/lib/assets/refresh.svg"
-import Question from "@/lib/assets/question.svg"
 import BackIcon from "@/lib/assets/chevron-left.svg"
 import { useNavigate } from "react-router-dom"
 import useStore from "@/lib/store";
@@ -33,11 +32,8 @@ const Layout = ({ children, ...props }) => {
                                 checked={i18n.language === "th"}
                                 onCheckedChange={() => i18n.language === "en" ? i18n.changeLanguage('th') : i18n.changeLanguage('en')}
                             />
-                            <Label htmlFor="airplane-mode" className="uppercase">{i18n.language}</Label>
+                            <Label htmlFor="airplane-mode" className="uppercase">{i18n.language === "th" ? "en" : "ไทย"}</Label>
                         </div>
-                        <button className="cursor-pointer opacity-80 hover:opacity-100 transition-opacity">
-                            <Question className="h-[24px]" />
-                        </button>
                     </div>
                 </div>
             </nav>

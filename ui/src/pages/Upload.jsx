@@ -1,4 +1,4 @@
-import { useMemo, useRef } from "react";
+import { useMemo, useRef, useState } from "react";
 import Transition from "@/components/Transition";
 import ImportIcon from "@/lib/assets/import.svg"
 import CloseIcon from "@/lib/assets/close.svg"
@@ -21,6 +21,10 @@ const getSample = (id, orientation) => {
 const UploadFactory = ({ orientation = "f", next = "/claim/upload/2", ...props }) => {
     const [scope, photos, setPhoto] = useStore(useShallow((state) => [state.scope, state.photos, state.setPhoto]))
 
+    const [usingSample, setUsingSample] = useState(false);
+
+    const photoDebounce = useRef(null)
+
     const { t } = useTranslation();
 
     const id = useMemo(() => scope?.policyId ?? "", [scope]);
@@ -41,10 +45,12 @@ const UploadFactory = ({ orientation = "f", next = "/claim/upload/2", ...props }
 
         const newFile = selectedFiles[0];
         setPhoto(orientation, newFile);
+        photoDebounce.current = newFile
     }, [setPhoto])
 
     const uploadSample = useCallback(async () => {
         // Programtically upload associated sample file
+        setUsingSample(true)
         if (ref.current) {
             const res = await fetch(sample);
             if (!res.ok) {
@@ -58,13 +64,14 @@ const UploadFactory = ({ orientation = "f", next = "/claim/upload/2", ...props }
             ref.current.files = dataTransfer.files;
             ref.current.dispatchEvent(new Event('change', { bubbles: true }));
         }
-    }, [scope])
+    }, [scope, setUsingSample])
 
     const clear = (e) => {
         e.preventDefault()
         if (ref.current) {
             ref.current.value = '';
             setPhoto(orientation, null)
+            setUsingSample(false)
         }
     }
 
@@ -91,26 +98,28 @@ const UploadFactory = ({ orientation = "f", next = "/claim/upload/2", ...props }
                         id="file"
                         hidden
                         name="file"
-                        accept=".pdf,.png" // TODO: pdf no work good
+                        accept=".png,.jpg,.jpeg" // TODO: pdf no work good
                         onChange={handleFileChange}
                     />
                     <label htmlFor="file" className="relative max-w-[500px] w-full h-[300px] border border-dashed rounded-md flex flex-col gap-y-2 items-center justify-center text-muted-foreground cursor-pointer">
                         <ImportIcon />
-                        <p data-file={!!photo} className="text-sm h-[20px] data-[file=true]:opacity-100 opacity-0 transition-opacity">
-                            {photo?.name ?? ""}
-                        </p>
-                        <CloseIcon data-file={!!photo} className="absolute top-3 right-3 data-[file=true]:opacity-100 opacity-0 transition-opacity" onClick={clear} />
-                        <img data-file={!!photo} src={sample} alt="sample photo" className="absolute h-[200px] rounded-lg mx-auto my-auto data-[file=true]:opacity-100 opacity-0 transition-opacity" />
+
+                        <button data-file={!!photo} className="absolute top-0 right-0 data-[file=true]:opacity-100 opacity-0 transition-opacity flex items-center p-4 " onClick={clear}>
+                            <CloseIcon />
+                        </button>
+
+                        <img data-file={!!photo} src={usingSample ? sample : photoDebounce.current ? URL.createObjectURL(photoDebounce.current) : null} alt="uploaded photo" className="absolute h-[200px] rounded-lg mx-auto my-auto data-[file=true]:opacity-100 opacity-0 transition-opacity" />
+
                     </label>
 
                 </div>
 
-                <div className="flex flex-col">
+                <div className="flex flex-col ">
+                    <button className="disabled:opacity-20 text-center py-12 text-muted-foreground text-sm hover:text-foreground disabled:text-muted-foreground disabled:cursor-not-allowed transition-colors cursor-pointer select-none" onClick={uploadSample} disabled={!!photo}>
 
-                    <p className="text-center py-12 text-muted-foreground text-sm hover:text-foreground transition-colors cursor-pointer select-none" onClick={uploadSample}>
                         {t('upload.btn.useSample')}
-                    </p>
 
+                    </button>
                 </div>
 
 
