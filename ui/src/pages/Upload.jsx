@@ -1,10 +1,9 @@
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState, useId, useCallback } from "react";
 import Transition from "@/components/Transition";
 import ImportIcon from "@/lib/assets/import.svg"
 import CloseIcon from "@/lib/assets/close.svg"
 import { useNavigate } from "react-router-dom";
 import { useShallow } from "zustand/react/shallow";
-import { useCallback } from "react";
 import useStore from "@/lib/store";
 import { useTranslation } from 'react-i18next';
 
@@ -19,6 +18,7 @@ const getSample = (id, orientation) => {
 
 
 const UploadFactory = ({ orientation = "f", next = "/claim/upload/2", ...props }) => {
+    const uploadId = useId()
     const [scope, photos, setPhoto] = useStore(useShallow((state) => [state.scope, state.photos, state.setPhoto]))
 
     const [usingSample, setUsingSample] = useState(false);
@@ -69,7 +69,7 @@ const UploadFactory = ({ orientation = "f", next = "/claim/upload/2", ...props }
     const clear = (e) => {
         e.preventDefault()
         if (ref.current) {
-            ref.current.value = '';
+            ref.current.value = null;
             setPhoto(orientation, null)
             setUsingSample(false)
         }
@@ -95,13 +95,13 @@ const UploadFactory = ({ orientation = "f", next = "/claim/upload/2", ...props }
                     <input
                         ref={ref}
                         type="file"
-                        id="file"
+                        id={uploadId}
                         hidden
                         name="file"
-                        accept=".png,.jpg,.jpeg" // TODO: pdf no work good
+                        accept=".png,.jpg,.jpeg"
                         onChange={handleFileChange}
                     />
-                    <label htmlFor="file" className="relative max-w-[500px] w-full h-[300px] border border-dashed rounded-md flex flex-col gap-y-2 items-center justify-center text-muted-foreground cursor-pointer">
+                    <label htmlFor={uploadId} className="relative max-w-[500px] w-full h-[300px] border border-dashed rounded-md flex flex-col gap-y-2 items-center justify-center text-muted-foreground cursor-pointer">
                         <ImportIcon />
 
                         <button data-file={!!photo} className="absolute top-0 right-0 data-[file=true]:opacity-100 opacity-0 transition-opacity flex items-center p-4 " onClick={clear}>
