@@ -123,11 +123,11 @@ const UploadFactory = ({ orientation = "f", next = "/claim/upload/2", ...props }
                 </div>
 
 
-                <div className="h-24" />
+                <div className="h-32" />
 
 
             </Transition>
-            <div className="fixed top-0 left-0 w-screen h-screen pointer-events-none">
+            <div className="fixed top-0 left-0 w-screen h-[100dvh] pointer-events-none">
 
 
                 <footer className="absolute bottom-0 left-0 bg-background w-full flex justify-center items-center h-24 border-t pointer-events-auto">
