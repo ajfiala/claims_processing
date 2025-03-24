@@ -1,23 +1,20 @@
-
+import { useMemo, useEffect } from "react";
 import Restart from "@/lib/assets/refresh.svg"
 import BackIcon from "@/lib/assets/chevron-left.svg"
 import { useNavigate } from "react-router-dom"
 import useStore from "@/lib/store";
-import { Switch } from "@/components/shadcn/switch";
-import { Label } from "@/components/shadcn/label";
 
 import { useTranslation } from 'react-i18next';
-import { useEffect } from "react";
+import { motion } from "framer-motion";
 
 const Layout = ({ children, ...props }) => {
     const navigate = useNavigate();
     const reset = useStore(state => state.reset);
     const scope = useStore(state => state.scope);
-    const { t, i18n } = useTranslation()
 
     // navigate home if you're fooling around on a page you shouldn't or we'll send Ton' to fix you up good
     useEffect(() => {
-        if(!scope?.policyId){
+        if (!scope?.policyId) {
             navigate("/")
         }
     }, [navigate])
@@ -36,13 +33,7 @@ const Layout = ({ children, ...props }) => {
                         <Restart className="h-[24px]" />
                     </button>
                     <div className="ml-auto sm:ml-0 flex gap-x-2">
-                        <div className="flex items-center space-x-2 w-[60px]">
-                            <Switch id="airplane-mode"
-                                checked={i18n.language === "th"}
-                                onCheckedChange={() => i18n.language === "en" ? i18n.changeLanguage('th') : i18n.changeLanguage('en')}
-                            />
-                            <Label htmlFor="airplane-mode" className="uppercase">{i18n.language === "th" ? "en" : "ไทย"}</Label>
-                        </div>
+                        <LanguageSelect />
                     </div>
                 </div>
             </nav>
@@ -55,6 +46,28 @@ const Layout = ({ children, ...props }) => {
                 {children}
             </main>
         </div>
+    )
+
+}
+
+const LanguageSelect = () => {
+    const { i18n } = useTranslation()
+    const on = useMemo(() => i18n.language === "th")
+
+    return (
+        <button className="relative bg-muted dark:bg-muted-foreground w-[78px] h-[36px] rounded-full" onClick={() => i18n.language === "en" ? i18n.changeLanguage('th') : i18n.changeLanguage('en')}>
+            <motion.div animate={{ x: on ? 0 : 34 }} className="absolute left-0 top-0 w-full h-full p-[2px]">
+                <div className="w-[40px] h-full bg-primary dark:bg-background rounded-full" />
+            </motion.div>
+            <div className="absolute w-full h-full flex flex-row px-[13px] items-center justify-center top-0 ">
+                <p data-selected={!on} className="text-[12px] data-[selected=true]:text-[black] transition-colors font-bold">
+                    TH
+                </p>
+                <p data-selected={!!on} className="ml-auto text-[12px] data-[selected=true]:text-[black] transition-colors font-bold">
+                    EN
+                </p>
+            </div>
+        </button>
     )
 
 }
